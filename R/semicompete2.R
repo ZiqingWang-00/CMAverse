@@ -1,17 +1,32 @@
 # updated semicompete script
 library(tidyverse)
 library(mstate)
+library(mstate)
+library(survminer)
+
+set.seed(123)
 
 #semicompete2 <- function(method = "breslow"){
 #
 #}
 
 # import sample data
-dtSurv1 = read_csv("/Users/apple/Desktop/CAUSAL/project/CMAverse_validation/simulated_dat/raw_dat1.csv")
-mstate_dtSurv1 = read_csv("/Users/apple/Desktop/CAUSAL/project/CMAverse_validation/simulated_dat/mstate_dat1.csv")
+dtSurv1 = read_csv("/Users/apple/Desktop/CAUSAL/project/CMAverse_validation/simulated_dat/raw_dat2.csv")
+#mstate_dtSurv1 = read_csv("/Users/apple/Desktop/CAUSAL/project/CMAverse_validation/simulated_dat/mstate_dat1.csv")
 
 # add another binary covariate C for generality
 dtSurv1$C1 = rbinom(nrow(dtSurv1), 1, 0.3)
+
+# summary plot
+survival_fit1 <- survfit(Surv(S, ind_S) ~ A, data = dtSurv1 %>% filter(C==1, C1==0))
+#ggsurvplot(survival_fit, data = dtSurv, pval = TRUE, pval.method = TRUE, conf.int = TRUE)
+ggsurvplot(survival_fit1, data = dtSurv1, pval = F, pval.method = F, conf.int = T)
+surv_pvalue(survival_fit1) # p-value
+survdiff(Surv(S, ind_S) ~ A, data = dtSurv1 %>% filter(C==1, C1==0))
+
+###############################################
+# Code to be modified into a function
+###############################################
 
 # set up function arguments
 data = dtSurv1
@@ -25,16 +40,12 @@ basecval = c("C" = "1", "C1" = "0")
 astar = "0" # the control value for the exposure. Default is 0
 a = "1" # the active value for the exposure. Default is 1.
 nboot = 100
-total_duration = max(dtSurv$S)
+total_duration = max(data$S)
 n_eval = 5 # calculate RD on 5 time points from [0, total_duration]
 formula_terms = c("A", "M", "C", "C1", "A*M")
 method = "breslow"
 
-# function code
-## set up relevant objects for later use
-s_grid = seq(0, total_duration, length.out=n_eval)
-RD_vec = rep(NA, length(s_grid))
-
+# semicompete function code
 ## create the formula for multistate modeling if not specified
 if (!is.null(formula_terms)){
   # convert formula_terms to multistate format
@@ -56,56 +67,65 @@ if (!is.null(formula_terms)){
   mstate_formula = as.formula(paste("Surv(Tstart, Tstop, status) ~ ", terms, "+ strata(trans)"))
 }
 
-## prepare the input data in multistate format
+## create nboot bootstrapping indices
+boot_ind = lapply(1:nboot, function(i){
+  ind = sample(1:nrow(data), nrow(data), replace=T)
+  data.frame(boot_iter = i, boot_ind = I(list(ind)))
+})
+boot_ind_df = do.call(rbind, boot_ind)
+
+## set up relevant quantities for multistate data prep
 trans = transMat(x=list(c(2, 3), c(3), c()), names=c(exposure, mediator, outcome)) # set up transition matrix
 covs_df = c(exposure, mediator, basec) # transition-dependent covariates
-mstate_data = msprep(time = c(NA, mediator, outcome), status = c(NA, mediator_event, event),
-                     data = data, trans = trans, keep = covs_df)
-mstate_data = expand.covs(mstate_data, covs_df, append = TRUE, longnames = FALSE)
 
-## create the multistate joint model object
-joint_mod = coxph(mstate_formula, data = mstate_data, method = method)
+# function code for computing 1 RD for 1 bootstrap dataset
+#system.time({
+one_point_est = function(i, s){
+  ## get the ith bootstrap sample
+  boot_samps = boot_ind_df$boot_ind[[i]]
+  dat = data[boot_samps,]
+  ## convert the bootstrap data to multistate format
+  mstate_data <<- msprep(time = c(NA, mediator, outcome), status = c(NA, mediator_event, event),
+                       data = dat, trans = trans, keep = covs_df)
+  #print(str(mstate_data))  # Add this line for debugging
+  mstate_data <<- expand.covs(mstate_data, covs_df, append = TRUE, longnames = FALSE)
+  ## create the multistate joint model object
+  joint_mod = coxph(mstate_formula, data = mstate_data, method = method)
 
-## set up new data for msfit() in the order of exposure, mediator, and outcome
-### newd000: A=0 for all 3 transitions ()
-A000 = matrix(rep(as.numeric(astar),9), nrow=3)
-colnames(A000) = grep(paste0("\\b", exposure, "\\."), names(mstate_data), value=TRUE, perl=TRUE)
-M3000 = matrix(rep(0,3), nrow=3)
-colnames(M3000) = grep(paste0("\\b", mediator, "\\.3"), names(mstate_data), value=TRUE, perl=TRUE)
-C000 = matrix(rep(0, 3*3*length(basec)), nrow=3)
-for (i in 1:length(basec)){
-  start = 1+(i-1)*3
-  end = 1+(i-1)*3+2
-  C000[,start:end] = diag(x=as.numeric(basecval[i]), 3)
-}
-C_colnames = rep(NA, 3*length(basec))
-for (i in 1:length(basec)){
-  start = 1+(i-1)*3
-  end = 1+(i-1)*3+2
-  C_colnames[start:end] = grep(paste0("\\b", basec[i], "\\."), names(mstate_data), value=TRUE, perl=TRUE)
-}
-newd000 = data.frame(A000, M3000, C000)
-colnames(newd000)[(ncol(A000)+ncol(M3000)+1):ncol(newd000)] = C_colnames
-newd000$trans = c(1,2,3)
-newd000$strata = c(1,2,3)
-attr(newd000,"trans") <- trans
-class(newd000) <- c("msdata", "data.frame")
+  ## set up new data for msfit() in the order of exposure, mediator, and outcome
+  ### newd000: A=0 for all 3 transitions ()
+  A000 = matrix(rep(as.numeric(astar),9), nrow=3)
+  colnames(A000) = grep(paste0("\\b", exposure, "\\."), names(mstate_data), value=TRUE, perl=TRUE)
+  M3000 = matrix(rep(0,3), nrow=3)
+  colnames(M3000) = grep(paste0("\\b", mediator, "\\.3"), names(mstate_data), value=TRUE, perl=TRUE)
+  C000 = matrix(rep(0, 3*3*length(basec)), nrow=3)
+  for (i in 1:length(basec)){
+    start = 1+(i-1)*3
+    end = 1+(i-1)*3+2
+    C000[,start:end] = diag(x=as.numeric(basecval[i]), 3)
+  }
+  C_colnames = rep(NA, 3*length(basec))
+  for (i in 1:length(basec)){
+    start = 1+(i-1)*3
+    end = 1+(i-1)*3+2
+    C_colnames[start:end] = grep(paste0("\\b", basec[i], "\\."), names(mstate_data), value=TRUE, perl=TRUE)
+  }
+  newd000 = data.frame(A000, M3000, C000)
+  colnames(newd000)[(ncol(A000)+ncol(M3000)+1):ncol(newd000)] = C_colnames
+  newd000$trans = c(1,2,3)
+  newd000$strata = c(1,2,3)
+  attr(newd000,"trans") <- trans
+  class(newd000) <- c("msdata", "data.frame")
+  ### newd010: A=0 for trans1, A=1 for trans2, A=0 for trans3
+  newd010 = newd000
+  newd010$A.2[2] = as.numeric(a)
+  attr(newd010,"trans") <- trans
+  class(newd010) <- c("msdata", "data.frame")
 
-### newd010: A=0 for trans1, A=1 for trans2, A=0 for trans3
-newd010 = newd000
-newd010$A.2[2] = as.numeric(a)
-attr(newd010,"trans") <- trans
-class(newd010) <- c("msdata", "data.frame")
-
-## for each time point, compute RD
-for (j in 1:length(s_grid)){
-  print(j)
-  s = s_grid[j] # one particular time point to compute the probability of surviving beyond
-  
   # use msfit() to get predicted cumulative hazards data frames
   cumhaz000_msfit = msfit(joint_mod, newd000, trans=trans)
   cumhaz010_msfit = msfit(joint_mod, newd010, trans=trans)
-  
+
   # extract cumulative hazards from the msfit objects
   cumhaz000 = cumhaz000_msfit$Haz
   cumhaz010 = cumhaz010_msfit$Haz
@@ -131,15 +151,14 @@ for (j in 1:length(s_grid)){
   cumhaz000_trans3_s = cumhaz000_trans3 %>% arrange(abs(time-s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{12}(s|A=0, C=1)
   
   # numerical integration
-  # numerical integration
-  i = 1
-  P_01 = 0
-  P_g_01 = 0
-  while(cumhaz000_trans1$time[i] < s & i < nrow(cumhaz000_trans1)){
-    # time = df$time[i] for M.3 = time for newd
-    time = cumhaz000_trans1$time[i] 
-    
-    # set up newdata as needed (transition 3 now has M)
+  # OPTIMIZE NUMERICAL INTEGRATION
+  ## extract time indices wheree the hazard equals 0; don't need to compute integrand for these
+  
+  
+  ## create the newd001 all at once and store in a list
+  up_to_ind = which.max(abs(cumhaz000_trans1$time - s) == min(abs(cumhaz000_trans1$time - s)))
+  newd001_list = lapply(cumhaz000_trans1$time[1:up_to_ind], function(time){
+    #set up newdata as needed (transition 3 now has M)
     ## nameing order: A.1=0, A.2 = 0, A.3=0
     ## C.1 = c(1,0,0) means C=1 for trans1, 0 for trans2, and 0 for trans3
     ## newd001: A.1=0, A.2=0, A.3=1
@@ -148,7 +167,11 @@ for (j in 1:length(s_grid)){
     newd001$M.3[3] = time
     attr(newd001, "trans") <- trans
     class(newd001) <- c("msdata", "data.frame")
-    
+    return(newd001)
+  })
+  
+  ## use lapply to compute each integrand, corresponding to the time
+  integrand_list = lapply(newd001_list, function(newd001){
     # create the msfit object, extract cumulative hazards data frame
     cumhaz001_msfit = msfit(joint_mod, newd001, trans=trans)
     cumhaz001 = cumhaz001_msfit$Haz
@@ -156,24 +179,85 @@ for (j in 1:length(s_grid)){
     cumhaz001_trans3 = subset(cumhaz001, trans==3)
     cumhaz001_trans3_s = cumhaz001_trans3 %>% arrange(abs(time-s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{12}(s|A=1, C=1)
     
-    P_01 = P_01 + (exp(-cumhaz000_trans1$Haz[i]-cumhaz000_trans2$Haz[i])*haz000_trans1[i]*exp(-cumhaz000_trans3_s+cumhaz000_trans3$Haz[i])) * (min(s,cumhaz000_trans1$time[i+1])-cumhaz000_trans1$time[i])
-    P_g_01 = P_g_01  + (exp(-cumhaz000_trans1$Haz[i]-cumhaz010_trans2$Haz[i])*haz000_trans1[i]*exp(-cumhaz001_trans3_s+cumhaz001_trans3$Haz[i])) * (min(s,cumhaz000_trans1$time[i+1])-cumhaz000_trans1$time[i])
-    
-    i=i+1
-  }
+    # get the row indices to evaluate the integrand over
+    time_ind = which(cumhaz001_trans3$time == newd001[3,"M.3"])
+    #time_ind = min(time_ind, up_to_ind)
+    if (time_ind < length(newd001_list)){
+      P_01_integrand = (exp(-cumhaz000_trans1$Haz[time_ind]-cumhaz000_trans2$Haz[time_ind])*haz000_trans1[time_ind]*exp(-cumhaz000_trans3_s+cumhaz000_trans3$Haz[time_ind])) * (min(s,cumhaz000_trans1$time[time_ind+1])-cumhaz000_trans1$time[time_ind])
+      P_g_01_integrand = (exp(-cumhaz000_trans1$Haz[time_ind]-cumhaz010_trans2$Haz[time_ind])*haz000_trans1[time_ind]*exp(-cumhaz001_trans3_s+cumhaz001_trans3$Haz[time_ind])) * (min(s,cumhaz000_trans1$time[time_ind+1])-cumhaz000_trans1$time[time_ind])
+    }else{
+      P_01_integrand = 0
+      P_g_01_integrand = 0
+    }
+    return(c(P_01 = P_01_integrand, P_g_01 = P_g_01_integrand))
+  })
+  
+  ## sum up the individual integrands as the estimate for P_01
+  sums = colSums(do.call(rbind, integrand_list))
+  P_01 = sums[1]
+  P_g_01 = sums[2]
   
   # P_00 and P_g_00
   P_00 = exp(-cumhaz000_trans1_s-cumhaz000_trans2_s)
   P_g_00 = exp(-cumhaz000_trans1_s-cumhaz010_trans2_s)
   
   # compute RD
-  RD_vec[j] = (P_g_00 + P_g_01) - (P_00 + P_01)
-  
+  RD = (P_g_00 + P_g_01) - (P_00 + P_01)
+  names(RD) = "RD"
+  return(RD)
+
 }
 
-## start bootstrap for loop to compute RD and TE, and SD = TE - RD
+# test the function
+#RD_test = one_point_est(10, 0.5)
+#RD_test
+#})
 
-# collect results in an output dataframe
+# run the above function over grids of s and i
+## set up relevant objects for later use
+#s_grid = seq(0, total_duration, length.out=n_eval)
+s_grid = seq(0, 1, length.out=n_eval)
+i_grid = seq(1, nboot, 1)
+## Create a data frame with all combinations of i and s values
+combinations <- expand.grid(i = i_grid, s = s_grid)
+# Apply your function to each row of the dataframe
+system.time({
+combinations$result <- apply(combinations, 1, function(row) {
+  print(row)
+  one_point_est(row["i"], row["s"])
+})
+## Reshape the data frame into a wide format with s values as columns
+library(reshape2)
+result_df <- dcast(combinations, i ~ s, value.var = "result")
+})
 
+saveRDS(s_grid, file = "/Users/apple/Desktop/CAUSAL/CMAverse/temp_objects/sgrid2.rds")
+saveRDS(result_df, file = "/Users/apple/Desktop/CAUSAL/CMAverse/temp_objects/dtsurv2_boot_sgrid2.rds")
 
+# use computing clusters to parallize 100 nboot samples and s_grid
+boot_mean = sapply(result_df[,-1], mean)
+boot_conf95_lower = sapply(result_df[,-1], function(x) quantile(x, probs = 0.025, na.rm = TRUE))
+boot_conf95_upper = sapply(result_df[,-1], function(x) quantile(x, probs = 0.975, na.rm = TRUE))
 
+# plot output
+# Create a data frame with the mean, lower limit, and upper limit values
+boot_plot_df <- data.frame(
+  x = s_grid,
+  mean = boot_mean,
+  lower_limit = boot_conf95_lower,
+  upper_limit = boot_conf95_upper
+)
+# Create a line plot of the means
+boot_plot <- ggplot(boot_plot_df, aes(x, mean)) +
+  geom_line() +  # Plot the means as a line
+  #geom_ribbon(aes(ymin = lower_limit, ymax = upper_limit), alpha = 0.3) +  # Shade the area between lower and upper limits
+  geom_segment(aes(xend = x, yend = upper_limit), color = "blue") +  # Vertical line to upper limit
+  geom_point(aes(x = x, y = upper_limit), color = "blue", size = 1) +
+  geom_segment(aes(xend = x, yend = lower_limit), color = "red") +   # Vertical line to lower limit
+  geom_point(aes(x = x, y = lower_limit), color = "red", size = 1) +
+  labs(
+    title = "RD estimates with bootstrap confidence intervals",
+    x = "s",
+    y = "RD"
+  )
+boot_plot
