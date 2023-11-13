@@ -9,7 +9,7 @@ library(doParallel)
 set.seed(123)
 
 # import sample data
-dtSurv1 = read_csv("/Users/apple/Desktop/CAUSAL/project/CMAverse_validation/simulated_dat/raw_dat2.csv")
+dtSurv1 = read_csv("/Users/apple/Desktop/CAUSAL/project/CMAverse_validation/simulated_dat/raw_dat1.csv")
 #mstate_dtSurv1 = read_csv("/Users/apple/Desktop/CAUSAL/project/CMAverse_validation/simulated_dat/mstate_dat1.csv")
 
 # add another binary covariate C for generality
@@ -177,14 +177,29 @@ s_point_est <- function(i, s_grid, mstate_bootlist, newd000, newd010, mstate_for
   #e <- environment()
   #print(ls(e))
   #mstate_data = e$mstate_data
+  
   # create the multistate joint model object
-  mstate_df <<- mstate_bootlist[[i]]
-  joint_mod <- coxph(mstate_form, data = mstate_df, method = method)
-  print("fitted mstate model")
+ # mstate_df <<- mstate_bootlist[[i]]
+  mstate_df <- mstate_bootlist[[i]]
+ # joint_mod <- survival::coxph(mstate_form, data = mstate_df, method = method)
+  #joint_mod <- lm(time ~ A + M + C, data = mstate_df)
+ # print("fitted lm model")
+  
+  # copy environment to avoid scoping issue
+  e <- environment()
+  assign("mstate_df", mstate_df, envir = e)
+  msfit_copy <- msfit
+  environment(msfit_copy) <- e
+  print(ls(e))
+  joint_mod <- survival::coxph(mstate_form, data = mstate_df, method = method)
+  print("fitted lm model")
 
+  # check using lm - lm didn't return the mstate_df not found error
+  #cumhaz000_msfit = predict(joint_mod, data.frame(A=1, M=0.5, C=1), interval="prediction")
+  #print(cumhaz000_msfit)
   # use msfit() to get predicted cumulative hazards data frames
-  cumhaz000_msfit = msfit(joint_mod, newd000, trans=trans)
-  cumhaz010_msfit = msfit(joint_mod, newd010, trans=trans)
+  cumhaz000_msfit = msfit_copy(joint_mod, newd000, trans=trans)
+  cumhaz010_msfit = msfit_copy(joint_mod, newd010, trans=trans)
   # extract cumulative hazards from the msfit objects
   cumhaz000 = cumhaz000_msfit$Haz
   cumhaz010 = cumhaz010_msfit$Haz
@@ -211,7 +226,7 @@ s_point_est <- function(i, s_grid, mstate_bootlist, newd000, newd010, mstate_for
   print("start creating integrand list")
   integrand_list = lapply(newd001_list, function(newd001){
     # create the msfit object, extract cumulative hazards data frame
-    cumhaz001_msfit = msfit(joint_mod, newd001, trans=trans)
+    cumhaz001_msfit = msfit_copy(joint_mod, newd001, trans=trans) # use msfit_copy to avoid scoping issue
     cumhaz001 = cumhaz001_msfit$Haz
     # get transition-specific cumulative hazards
     cumhaz001_trans3 = subset(cumhaz001, trans==3)
@@ -263,8 +278,44 @@ system.time({
 })
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # test the function on 100 bootstrap samples
-i_grid = seq(1, nboot, 1)
+#i_grid = seq(1, nboot, 1)
+i_grid = seq(1, 5, 1)
 
 # PARALLEL VERSION
 ## make clusters
@@ -275,8 +326,10 @@ registerDoParallel(cl)
 system.time({
   RD_vec_list_para <- foreach(index = i_grid,
                               .combine = c,
+                              #.export = c("mstate_df"),
                               .packages = c("mstate", "tidyverse")) %dopar% {
-    .GlobalEnv$mstate_df <- mstate_bootlist[[index]]
+    #.GlobalEnv$mstate_df <- mstate_bootlist[[index]]
+    mstate_df <- mstate_bootlist[[index]]
     s_point_est(i=index, s_grid, mstate_bootlist, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], mstate_form,
                 exposure, mediator, outcome, basec, mediator_event, event,
                 trans, method)
