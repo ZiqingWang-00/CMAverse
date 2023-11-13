@@ -5,6 +5,7 @@ library(mstate)
 library(survminer)
 library(foreach)
 library(doParallel)
+library(rlang)
 
 set.seed(123)
 
@@ -66,8 +67,11 @@ mstate_formula = function(exposure, mediator, basec, formula_terms){
       }
     }
     ## create the formula for multistate modeling
-    mstate_formula = as.formula(paste("Surv(Tstart, Tstop, status) ~ ", terms, "+ strata(trans)"))
+    #mstate_formula <- as.formula(paste("Surv(Tstart, Tstop, status) ~ ", terms, "+ strata(trans)"))
+    mstate_formula <- paste("Surv(Tstart, Tstop, status) ~ ", terms, "+ strata(trans)")
     return(mstate_formula)
+  }else{
+    return(NULL)
   }
 }
 
@@ -147,7 +151,8 @@ dynamic_newd = function(newd000, time_vec, max_s, a, trans){
 ## NEXT STEP: create the objects that only need to be created once outside of the one_point_est function
 ## pass in additional arguments when running the apply function for (i,s) grid
 boot_ind_df = make_boot_ind(data, nboot)
-mstate_form = mstate_formula(exposure, mediator, basec, formula_terms)
+mstate_form <- mstate_formula(exposure, mediator, basec, formula_terms)
+mstate_form <- as.formula(mstate_form)
 ## set up relevant quantities for multistate data prep
 trans = transMat(x=list(c(2, 3), c(3), c()), names=c(exposure, mediator, outcome)) # set up transition matrix
 covs_df = c(exposure, mediator, basec) # transition-dependent covariates
@@ -168,8 +173,10 @@ mstate_bootlist <- lapply(boot_ind_list, function(ind){
   return(mstate_boot_dat)
 })
 
+
+
 # updated function calculates the RD on all s elements in the s_grid for each bootstrap sample i 
-s_point_est <- function(i, s_grid, mstate_bootlist, newd000, newd010, mstate_form,
+s_point_est <- function(s_grid, mstate_df, newd000, newd010, mstate_form,
                         exposure, mediator, outcome, basec, mediator_event, event, 
                         trans, method){
   
@@ -179,27 +186,28 @@ s_point_est <- function(i, s_grid, mstate_bootlist, newd000, newd010, mstate_for
   #mstate_data = e$mstate_data
   
   # create the multistate joint model object
- # mstate_df <<- mstate_bootlist[[i]]
-  mstate_df <- mstate_bootlist[[i]]
- # joint_mod <- survival::coxph(mstate_form, data = mstate_df, method = method)
+  # mstate_df <<- mstate_bootlist[[i]]
+  #mstate_df <- mstate_bootlist[[i]]
+   joint_mod <- survival::coxph(mstate_form, data = mstate_df, method = method)
   #joint_mod <- lm(time ~ A + M + C, data = mstate_df)
- # print("fitted lm model")
+  # print("fitted lm model")
   
   # copy environment to avoid scoping issue
-  e <- environment()
-  assign("mstate_df", mstate_df, envir = e)
-  msfit_copy <- msfit
-  environment(msfit_copy) <- e
-  print(ls(e))
-  joint_mod <- survival::coxph(mstate_form, data = mstate_df, method = method)
-  print("fitted lm model")
-
+  #e <- environment()
+  #mstate_df <- mstate_bootlist[[i]]
+  #assign("mstate_df", mstate_df, envir = e)
+  #msfit_copy <- msfit
+  #environment(msfit_copy) <- e
+  #print(ls(e))
+  #joint_mod <- survival::coxph(mstate_form, data = mstate_df, method = method)
+  print("fitted model")
+  
   # check using lm - lm didn't return the mstate_df not found error
   #cumhaz000_msfit = predict(joint_mod, data.frame(A=1, M=0.5, C=1), interval="prediction")
   #print(cumhaz000_msfit)
   # use msfit() to get predicted cumulative hazards data frames
-  cumhaz000_msfit = msfit_copy(joint_mod, newd000, trans=trans)
-  cumhaz010_msfit = msfit_copy(joint_mod, newd010, trans=trans)
+  cumhaz000_msfit = msfit(joint_mod, newd000, trans=trans)
+  cumhaz010_msfit = msfit(joint_mod, newd010, trans=trans)
   # extract cumulative hazards from the msfit objects
   cumhaz000 = cumhaz000_msfit$Haz
   cumhaz010 = cumhaz010_msfit$Haz
@@ -226,7 +234,7 @@ s_point_est <- function(i, s_grid, mstate_bootlist, newd000, newd010, mstate_for
   print("start creating integrand list")
   integrand_list = lapply(newd001_list, function(newd001){
     # create the msfit object, extract cumulative hazards data frame
-    cumhaz001_msfit = msfit_copy(joint_mod, newd001, trans=trans) # use msfit_copy to avoid scoping issue
+    cumhaz001_msfit = msfit(joint_mod, newd001, trans=trans) # use msfit_copy to avoid scoping issue
     cumhaz001 = cumhaz001_msfit$Haz
     # get transition-specific cumulative hazards
     cumhaz001_trans3 = subset(cumhaz001, trans==3)
@@ -271,7 +279,9 @@ s_point_est <- function(i, s_grid, mstate_bootlist, newd000, newd010, mstate_for
 
 # test the function on 1 bootstrap sample
 system.time({
-  test2 = s_point_est(i=10, s_grid=s_grid, mstate_bootlist, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], mstate_form=mstate_form,
+  i = 22
+  mstate_df <- mstate_bootlist[[i]]
+  test2 = s_point_est(s_grid=s_grid, mstate_df=mstate_df, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], mstate_form=mstate_form,
                       exposure=exposure, mediator=mediator, outcome=outcome, basec=basec, mediator_event=mediator_event, event=event,
                       trans=trans, method=method)
   test2
@@ -279,43 +289,8 @@ system.time({
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # test the function on 100 bootstrap samples
 #i_grid = seq(1, nboot, 1)
-i_grid = seq(1, 5, 1)
 
 # PARALLEL VERSION
 ## make clusters
@@ -324,17 +299,24 @@ registerDoParallel(cl)
 
 ## run in parallel
 system.time({
-  RD_vec_list_para <- foreach(index = i_grid,
+  RD_vec_list_para <- foreach(i=seq_along(mstate_bootlist),
                               .combine = c,
-                              #.export = c("mstate_df"),
                               .packages = c("mstate", "tidyverse")) %dopar% {
-    #.GlobalEnv$mstate_df <- mstate_bootlist[[index]]
-    mstate_df <- mstate_bootlist[[index]]
-    s_point_est(i=index, s_grid, mstate_bootlist, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], mstate_form,
+    #.GlobalEnv$mstate_df <- mstate_bootlist[[i]]
+    mstate_df <- mstate_bootlist[[i]]  
+    ## Explicitly export necessary objects
+    parallel::clusterExport(cl, c("mstate_df"))
+    s_point_est(s_grid, mstate_df=mstate_df, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], mstate_form,
                 exposure, mediator, outcome, basec, mediator_event, event,
                 trans, method)
   }
 })
+stopCluster(cl)
+
+
+
+
+
 
 
 # plot parallel computing result
