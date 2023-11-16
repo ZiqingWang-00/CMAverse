@@ -452,13 +452,17 @@
 #' @import dplyr
 #' @import tidyr
 #' @import ggplot2
+#' @import foreach
+#' @import doParallel
+
 #' @export
 # covs is null/multiple covs/
 # plot no warning (shape)
 # checking, readme file, help page for command/website with example using multistate model
 cmest <- function(data = NULL, model = "rb",
-                  total_duration = NULL,
-                  time_grid = NULL,survival_time_fortable = NULL,formula = NULL,
+                  seed = 123, # added 11.15.2023: seed for bootstrap samples
+                  time_grid = NULL, formula = NULL, formula_terms = NULL, # formula terms for mstate
+                  method = "breslow",
                   full = TRUE, casecontrol = FALSE, yrare = NULL, yprevalence = NULL,
                   estimation = "imputation", inference = "bootstrap",
                   outcome = NULL, event = NULL, mediator_event = NULL,
@@ -484,7 +488,7 @@ cmest <- function(data = NULL, model = "rb",
  if(length(nboot) == 0) stop("Unspecified repeat time")
  if(is.null(mediator_event)) stop("Unspecified mediator_event")
  if(is.null(event)) stop("Unspecified outcome event")
- if(is.null(total_duration)|!is.numeric(total_duration)) stop("Unspecified total duration")
+ #if(is.null(total_duration)|!is.numeric(total_duration)) stop("Unspecified total duration")
  if(is.null(time_grid)|!is.numeric(time_grid)) stop("Unspecified time grid")
  if(!is.numeric(nboot)) stop("Unspecified nboot")
  if(!is.null(formula)){if(formula[2] != 'Surv(Tstart, Tstop, status)()') stop("Formula must start with Surv(Tstart, Tstop, status) ~")}
@@ -528,21 +532,72 @@ cmest <- function(data = NULL, model = "rb",
 }
  if (is.null(a) | is.null(astar)) stop("Unspecified a or astar")
  if(a %in% unique(data[,exposure]) == F |astar %in% unique(data[,exposure]) == F ) stop("Exposure value are not in dataset")
- if(!is.numeric(survival_time_fortable)) stop("Survival_time_fortable must be numeric")
+ #if(!is.numeric(survival_time_fortable)) stop("Survival_time_fortable must be numeric")
 #####Run the multistate model
-  cl <- match.call()
-  environment(semicompete) = environment()
-  out <- list(call = cl)
-  out <- c(out, semicompete())
-  class(out) <- "cmest"
-  return(out)}
-  else{
+    ### old code
+  #cl <- match.call()
+  #environment(semicompete) = environment()
+  #out <- list(call = cl)
+  #out <- c(out, semicompete())
+  #class(out) <- "cmest"
+  #return(out)}
+  #else{
   # function call
-  cl <- match.call()
-  n <- nrow(data)
+  #cl <- match.call()
+  #n <- nrow(data)
   # output list
-  out <- list(call = cl)
-
+  #out <- list(call = cl)
+    ### UPDATE: 11.15.2023  
+  set.seed(seed)
+  data = data.frame(data)
+  s_grid = time_grid
+  # create necessary objects
+  boot_ind_df = make_boot_ind(data, nboot)
+  mstate_form = mstate_formula(exposure, mediator, basec, formula_terms)
+  # set up transition matrix
+  trans = transMat(x=list(c(2, 3), c(3), c()), names=c(exposure, mediator, outcome)) 
+  # transition-dependent covariates
+  covs_df = c(exposure, mediator, basec) 
+  # extract the time vector for making newd001 list
+  mstate_data_orig <<- make_mstate_dat(dat=data, mediator, outcome, mediator_event, event, trans, covs_df)
+  fixed_newd = fixed_newd(mstate_dat=mstate_data_orig, trans, a, astar, exposure, mediator, basec, basecval)
+  joint_mod_orig = survival::coxph(mstate_form, data = mstate_data_orig, method = method)
+  cumhaz000_msfit = msfit(joint_mod_orig, fixed_newd[[1]], trans=trans)
+  cumhaz000 = cumhaz000_msfit$Haz
+  cumhaz000_trans1 = subset(cumhaz000, trans==1)
+  time_vec = cumhaz000_trans1$time # extract time vector
+  newd001_list = dynamic_newd(fixed_newd[[1]], time_vec, max_s=max(s_grid), a, trans)
+  # create a list of mstate data that corresponds to the bootstrap samples
+  boot_ind_list = boot_ind_df$boot_ind
+  mstate_bootlist <- lapply(boot_ind_list, function(ind){
+    boot_dat = data[ind,]
+    mstate_boot_dat <- make_mstate_dat(dat=boot_dat, mediator, outcome, mediator_event, event, trans, covs_df)
+    return(mstate_boot_dat)
+  })
+  
+  # PARALLEL computing
+  ## nboot grid
+  i_grid = seq(1, nboot, 1)
+  ## make clusters
+  cl <- makeCluster(detectCores())
+  registerDoParallel(cl)
+  ## run in parallel
+  RD_vec_list_para <- foreach(index = i_grid,
+                              .combine = c,
+                              .export = c("dynamic_newd", "s_point_est"),
+                              .packages = c("mstate", "tidyverse")) %dopar% {
+                                .GlobalEnv$mstate_df <- mstate_bootlist[[index]]
+                                s_point_est(i=index, s_grid, mstate_bootlist, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], mstate_form,
+                                            exposure, mediator, outcome, basec, mediator_event, event,
+                                            trans, method,
+                                            a)
+                              }
+  stopCluster(cl)
+  return(RD_vec_list_para)
+  
+  }
+  
+  else{
   ###################################################################################################
   #################################Argument Restrictions And Warnings################################
   ###################################################################################################
