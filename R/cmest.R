@@ -85,9 +85,7 @@
 #' @param object an object of class \code{cmest}
 #' @param digits minimal number of significant digits. See \link{print.default}.
 #' @param mediator_event The mediator status indicator in multistate model.
-#' @param total_duration a number indicate total duration of observation in multistate model.
 #' @param time_grid a number of time grid in multistate model.
-#' @param survival_time_fortablea a number of survival time to generate the summary table.
 #' @param formula A regression formula for multistate model.
 #'
 #'
