@@ -1,0 +1,52 @@
+---
+title: "test updated CMAverse package"
+author: "Ziqing Wang"
+date: "2023-11-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+devtools::install_github("ZiqingWang-00/CMAverse")
+library(CMAverse)
+library(readr)
+library(tidyverse)
+library(mstate)
+library(survival)
+```
+
+```{r import data}
+# import sample data
+dtSurv1 = read_csv("/Users/apple/Desktop/CAUSAL/project/CMAverse_validation/simulated_dat/raw_dat1.csv")
+#mstate_dtSurv1 = read_csv("/Users/apple/Desktop/CAUSAL/project/CMAverse_validation/simulated_dat/mstate_dat1.csv")
+dtSurv1 = data.frame(dtSurv1)
+# add another binary covariate C for generality
+dtSurv1$C1 = rbinom(nrow(dtSurv1), 1, 0.3)
+```
+
+```{r}
+dtSurv1$A = as.factor(dtSurv1$A)
+```
+
+
+```{r}
+system.time({
+surv_biE <- cmest(data = dtSurv1, model = 'multistate', time_grid = seq(0,1,length.out=5),
+                  seed = 123,
+                  formula_terms = c("A", "M", "C", "C1", "A*M"),
+                  exposure = 'A', mediator = 'M', outcome = 'S',
+                  event = "ind_S",mediator_event = "ind_M", basec = c("C", "C1"),
+                  basecval = c("C" = "1", "C1" = "0"), astar = '0',a='1', nboot=10,
+                  method = "breslow")  
+})
+
+surv_biE
+```
+
+(DO NOT CONSIDER) fit multistate model first and extract how each transition was modeled based on the user-input formula
+
+default basecval (set values at mean level)
+
+mreg, yreg; pass mstate model object instead of formula_terms ymreg (joint model)
+
+change method to bh_method (baseline hazard method)
