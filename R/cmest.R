@@ -531,21 +531,8 @@ cmest <- function(data = NULL, model = "rb",
  if (is.null(a) | is.null(astar)) stop("Unspecified a or astar")
  if(a %in% unique(data[,exposure]) == F |astar %in% unique(data[,exposure]) == F ) stop("Exposure value are not in dataset")
  #if(!is.numeric(survival_time_fortable)) stop("Survival_time_fortable must be numeric")
-#####Run the multistate model
-    ### old code
-  #cl <- match.call()
-  #environment(semicompete) = environment()
-  #out <- list(call = cl)
-  #out <- c(out, semicompete())
-  #class(out) <- "cmest"
-  #return(out)}
-  #else{
-  # function call
-  #cl <- match.call()
-  #n <- nrow(data)
-  # output list
-  #out <- list(call = cl)
-    ### UPDATE: 11.15.2023  
+##### RUN THE MULTISTATE METHOD
+  ### UPDATE: 11.15.2023  
   set.seed(seed)
   data = data.frame(data)
   s_grid = time_grid
@@ -557,7 +544,8 @@ cmest <- function(data = NULL, model = "rb",
   # transition-dependent covariates
   covs_df = c(exposure, mediator, basec) 
   # extract the time vector for making newd001 list
-  mstate_data_orig <<- make_mstate_dat(dat=data, mediator, outcome, mediator_event, event, trans, covs_df)
+  ##mstate_data_orig <<- make_mstate_dat(dat=data, mediator, outcome, mediator_event, event, trans, covs_df)
+  mstate_data_orig <- make_mstate_dat(dat=data, mediator, outcome, mediator_event, event, trans, covs_df)
   fixed_newd = fixed_newd(mstate_dat=mstate_data_orig, trans, a, astar, exposure, mediator, basec, basecval)
   joint_mod_orig = survival::coxph(mstate_form, data = mstate_data_orig, method = method)
   cumhaz000_msfit = msfit(joint_mod_orig, fixed_newd[[1]], trans=trans)
@@ -584,7 +572,7 @@ cmest <- function(data = NULL, model = "rb",
                               .combine = c,
                               .export = c("dynamic_newd", "s_point_est"),
                               .packages = c("mstate", "tidyverse")) %dopar% {
-                                .GlobalEnv$mstate_df <- mstate_bootlist[[index]]
+                                #.GlobalEnv$mstate_df <- mstate_bootlist[[index]]
                                 s_point_est(i=index, s_grid, mstate_bootlist, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], mstate_form,
                                             exposure, mediator, outcome, basec, mediator_event, event,
                                             trans, method,

@@ -1,4 +1,5 @@
 # updated semicompete script
+## avoids using the super-assignment operator <<-
 library(tidyverse)
 library(mstate)
 library(foreach)
@@ -113,10 +114,12 @@ s_point_est <- function(i, s_grid, mstate_df, newd000, newd010, mstate_form,
   #print(ls(e))
   #mstate_data = e$mstate_data
   # create the multistate joint model object
-  mstate_df <<- mstate_bootlist[[i]]
+  #mstate_df <<- mstate_bootlist[[i]]
+  mstate_df <- mstate_bootlist[[i]]
   joint_mod <- coxph(mstate_form, data = mstate_df, method = method)
-  #joint_mod$data <- mstate_df
-  #joint_mod2 <- eval.parent(joint_mod)
+  joint_mod_call <- getCall(joint_mod)
+  joint_mod_call$data <- mstate_df
+  joint_mod2 <- eval.parent(joint_mod_call)
   print("fitted model")
   
   #print("check y-vector reconstruction")
@@ -128,9 +131,9 @@ s_point_est <- function(i, s_grid, mstate_df, newd000, newd010, mstate_form,
   #print(dim(y))
 
   # use msfit() to get predicted cumulative hazards data frames
-  cumhaz000_msfit = msfit(joint_mod, newd000, trans=trans)
+  cumhaz000_msfit = msfit(joint_mod2, newd000, trans=trans)
   #cumhaz000_msfit = predict(joint_mod2, newd000)
-  cumhaz010_msfit = msfit(joint_mod, newd010, trans=trans)
+  cumhaz010_msfit = msfit(joint_mod2, newd010, trans=trans)
   print("computed the first two cumhaz dfs")
   # extract cumulative hazards from the msfit objects
   cumhaz000 = cumhaz000_msfit$Haz
@@ -158,7 +161,7 @@ s_point_est <- function(i, s_grid, mstate_df, newd000, newd010, mstate_form,
   print("start creating integrand list")
   integrand_list = lapply(newd001_list, function(newd001){
     # create the msfit object, extract cumulative hazards data frame
-    cumhaz001_msfit = msfit(joint_mod, newd001, trans=trans)
+    cumhaz001_msfit = msfit(joint_mod2, newd001, trans=trans)
     cumhaz001 = cumhaz001_msfit$Haz
     # get transition-specific cumulative hazards
     cumhaz001_trans3 = subset(cumhaz001, trans==3)
@@ -201,52 +204,3 @@ s_point_est <- function(i, s_grid, mstate_df, newd000, newd010, mstate_form,
   return(RD_vec)
 }
 
-## TEST RUN
-# import sample data
-#dtSurv1 = read_csv("/Users/apple/Desktop/CAUSAL/project/CMAverse_validation/simulated_dat/raw_dat1.csv")
-#mstate_dtSurv1 = read_csv("/Users/apple/Desktop/CAUSAL/project/CMAverse_validation/simulated_dat/mstate_dat1.csv")
-# add another binary covariate C for generality
-#dtSurv1$C1 = rbinom(nrow(dtSurv1), 1, 0.3)
-#data = dtSurv1
-#exposure = "A"
-#mediator = "M"
-#outcome = "S"
-#event = "ind_S"
-#mediator_event = "ind_M"
-#basec = c("C", "C1")
-#basecval = c("C" = "1", "C1" = "0")
-#astar = "0" # the control value for the exposure. Default is 0
-#a = "1" # the active value for the exposure. Default is 1.
-#nboot = 100
-#formula_terms = c("A", "M", "C", "C1", "A*M")
-#method = "breslow"
-#s_grid = seq(0,1,length.out = 5)
-
-#boot_ind_df = make_boot_ind(data=data, nboot=nboot)
-#mstate_form <- mstate_formula(exposure=exposure, mediator=mediator, basec=basec, formula_terms=formula_terms)
-#mstate_form <- as.formula(mstate_form)
-## set up relevant quantities for multistate data prep
-#trans = transMat(x=list(c(2, 3), c(3), c()), names=c(exposure, mediator, outcome)) # set up transition matrix
-#covs_df = c(exposure, mediator, basec) # transition-dependent covariates
-## extract the time vector for making newd001 list
-#mstate_data_orig = make_mstate_dat(dat=data, mediator=mediator, outcome=outcome, mediator_event=mediator_event, event=event, trans=trans, covs_df=covs_df)
-#fixed_newd = fixed_newd(mstate_dat=mstate_data_orig, trans=trans, a=a, astar=astar, exposure=exposure, mediator=mediator, basec=basec, basecval=basecval)
-#joint_mod_orig = coxph(formula=mstate_form, data = mstate_data_orig, method = method)
-#cumhaz000_msfit = msfit(joint_mod_orig, fixed_newd[[1]], trans=trans)
-#cumhaz000 = cumhaz000_msfit$Haz
-#cumhaz000_trans1 = subset(cumhaz000, trans==1)
-#time_vec = cumhaz000_trans1$time
-#newd001_list = dynamic_newd(fixed_newd[[1]], time_vec, max_s=max(s_grid), a, trans)
-## create a list of mstate data that corresponds to the bootstrap samples
-#boot_ind_list = boot_ind_df$boot_ind
-#mstate_bootlist <- lapply(boot_ind_list, function(ind){
-#  boot_dat = data[ind,]
-#  mstate_boot_dat <- make_mstate_dat(dat=boot_dat, mediator, outcome, mediator_event, event, trans, covs_df)
-#  return(mstate_boot_dat)
-#})
-
-# run
-#s_point_est(i=20, s_grid=s_grid, mstate_df=mstate_bootlist[[2]], newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], mstate_form=mstate_form,
-#         exposure=exposure, mediator=mediator, outcome=outcome, basec=basec, mediator_event=mediator_event, event=event,
-#         trans=trans, method=method,
-#         a=a)
