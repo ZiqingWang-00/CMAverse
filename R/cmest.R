@@ -423,11 +423,134 @@ cmest <- function(data = NULL, model = "rb",
                   yreg = NULL, mreg = NULL, wmnomreg = NULL, wmdenomreg = NULL, ereg = NULL, 
                   postcreg = NULL,
                   astar = 0, a = 1, mval = NULL, yval = NULL, basecval = NULL,
-                  nboot = 200, boot.ci.type = "per", nRep = 5, multimp = FALSE, args_mice = NULL) {
+                  nboot = 200, boot.ci.type = "per", nRep = 5, multimp = FALSE, args_mice = NULL,
+                  # additional arguments for multistate
+                  ymreg = "coxph", multistate_seed = 123, time_grid = NULL, bh_method = "breslow",
+                  mediator_event = NULL) {
   # function call
   cl <- match.call()
   # output list
   out <- list(call = cl)
+  
+  # TEMP: Jan 22 2024
+  if (model == "multistate") {
+    #################Argument Restrictions And Warnings
+    #####restrictions on data
+    if(is.null(data)) stop("Unspecified data")
+    if(!exposure %in% names(data) | !outcome  %in% names(data) |
+       !event  %in% names(data) | !mediator  %in% names(data) |!mediator_event  %in% names(data) |
+       !event  %in% names(data) ) stop("Unspecify variable in dataset")
+    if(length(exposure) == 0) stop("Unspecified exposure")
+    if(length(unique(data[,exposure])) < 2) stop("Exposure much have at least 2 levels")
+    if(!is.factor(data[,exposure])) stop("Exposure must be a factor")
+    if(length(mediator) == 0) stop("Unspecified mediator")
+    if(is.null(outcome)) stop("Unspecified outcome")
+    if (length(outcome) > 1) stop("length(outcome) > 1")
+    if(length(nboot) == 0) stop("Unspecified repeat time")
+    if(is.null(mediator_event)) stop("Unspecified mediator_event")
+    if(is.null(event)) stop("Unspecified outcome event")
+    #if(is.null(total_duration)|!is.numeric(total_duration)) stop("Unspecified total duration")
+    if(is.null(time_grid)|!is.numeric(time_grid)) stop("Unspecified time grid")
+    if(!is.numeric(nboot)) stop("Unspecified nboot")
+    if(length(basec) != 0){
+      if(is.null(basecval)){
+        ref_basec = c()
+        for (i in 1:length(basec)) {
+          if (is.numeric(data[,basec[i]]) ){
+            ref_basec[i] = mean(data[,basec[i]])
+          }
+          else if(is.factor(data[,basec[i]]) ){
+            ref_basec[i] = levels(data[,basec[i]])[1]
+          }
+          else stop("Basecval must be defined and Basec must be either numeric or factor")
+        }
+        names(ref_basec) = basec
+        basecval = ref_basec }
+      else if(length(basec) >= length(names(basecval)) & all(names(basecval) %in% basec) == T){
+        if(length(basec) > length(names(basecval))) warning('Not every covariance get assigned value, autocomplete it using mean of continuous value or first level of factor')
+        ref_basec = c()
+        for (i in 1:length(basec)) {
+          if(!is.na(basecval[basec[i]])){
+            ref_basec[i] = basecval[basec[i]]
+          }else if(is.na(basecval[basec[i]])){
+            if (is.numeric(data[,basec[i]]) ){
+              ref_basec[i] = mean(data[,basec[i]])
+            }
+            else if(is.factor(data[,basec[i]]) ){
+              ref_basec[i] = levels(data[,basec[i]])[1]
+            }
+            else stop("Basecval must be defined and Basec must be either numeric or factor")
+          } }
+        names(ref_basec) = basec
+        basecval = ref_basec
+        
+      } else if(length(basec) < length(names(basecval))){
+        stop('More covariance in basecval than basec')
+      }else if(length(basec) >= length(names(basecval)) & all(names(basecval) %in% basec) == F){
+        stop('Not all covariance in basecval were included in basec')
+      }
+    }
+    if (is.null(a) | is.null(astar)) stop("Unspecified a or astar")
+    if(a %in% unique(data[,exposure]) == F |astar %in% unique(data[,exposure]) == F ) stop("Exposure value are not in dataset")
+    #if(!is.numeric(survival_time_fortable)) stop("Survival_time_fortable must be numeric")
+    ##### RUN THE MULTISTATE METHOD
+    set.seed(multistate_seed)
+    data = data.frame(data)
+    s_grid = time_grid
+    ## set up transition matrix
+    trans = transMat(x=list(c(2, 3), c(3), c()), names=c(exposure, mediator, outcome)) 
+    ## transition-dependent covariates
+    covs_df = c(exposure, mediator, basec) 
+    # create necessary objects
+    ## create a list of mstate data that corresponds to the bootstrap samples
+    boot_ind_df = make_boot_ind(data=data, nboot=nboot)
+    boot_ind_list = boot_ind_df$boot_ind
+    mstate_bootlist <- lapply(boot_ind_list, function(ind){
+      boot_dat = data[ind,]
+      mstate_boot_dat <- make_mstate_dat(dat=boot_dat, mediator, outcome, mediator_event, event, trans, covs_df)
+      return(mstate_boot_dat)
+    })
+    ## create the formula object for joint mstate modeling
+    mstate_form = mstate_formula(data=data, exposure=exposure, mediator=mediator, basec=basec, EMint=EMint)
+    mstate_form <- as.formula(mstate_form)
+    ## create fixed newdata dfs for msfit()
+    mstate_data_orig = make_mstate_dat(dat=data, mediator=mediator, outcome=outcome, mediator_event=mediator_event, event=event, trans=trans, covs_df=covs_df)
+    fixed_newd = fixed_newd(mstate_data=mstate_data_orig, trans=trans, a=a, astar=astar, exposure=exposure, mediator=mediator, basec=basec, basecval=basecval)
+    
+    # PARALLEL computing
+    ## nboot grid
+    i_grid = seq(1, nboot, 1)
+    ## make clusters
+    cl <- makeCluster(detectCores()-1)
+    registerDoParallel(cl)
+    ## run in parallel
+    no_cores <- detectCores() 
+    cl <- makeCluster(no_cores-1)
+    #registerDoParallel(cl)
+    registerDoSNOW(cl)
+    
+    pb <- txtProgressBar(max = nboot, style = 3)
+    progress <- function(n) setTxtProgressBar(pb, n)
+    opts <- list(progress = progress)
+    
+    system.time({
+      i_grid = seq(1, nboot, 1)
+      results <- foreach(index = i_grid,
+                         .options.snow = opts,
+                         .verbose=F,
+                         .combine = rbind,
+                         .export = c("mstate_formula", "make_mstate_dat", "s_point_est", "dynamic_newd", "fixed_newd", "make_boot_ind"),
+                         .packages = c("mstate", "tidyverse")) %dopar% {
+                           s_point_est(i=index, mstate_bootlist,
+                                       s_grid, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], newd100=fixed_newd[[3]], mstate_form,
+                                       a, astar, exposure, mediator,
+                                       trans, bh_method)
+                         }
+    })
+    close(pb)
+    stopCluster(cl)
+    return(results)
+  }
   
   ###################################################################################################
   #################################Argument Restrictions And Warnings################################
