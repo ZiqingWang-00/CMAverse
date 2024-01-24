@@ -520,12 +520,9 @@ cmest <- function(data = NULL, model = "rb",
     # PARALLEL computing
     ## nboot grid
     i_grid = seq(1, nboot, 1)
-    ## make clusters
-    cl <- makeCluster(detectCores()-1)
-    registerDoParallel(cl)
     ## run in parallel
     no_cores <- detectCores() 
-    cl <- makeCluster(no_cores-1)
+    cl <- parallel::makeCluster(no_cores-1)
     #registerDoParallel(cl)
     registerDoSNOW(cl)
     
