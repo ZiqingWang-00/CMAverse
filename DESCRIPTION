@@ -49,6 +49,7 @@ Imports:
     predint,
     mstate,
     foreach,
+    parallel,
     doSNOW
 RoxygenNote: 7.1.1
 Suggests: 
