@@ -50,8 +50,9 @@ Imports:
     mstate,
     foreach,
     parallel,
-    doSNOW
-RoxygenNote: 7.1.1
+    doSNOW,
+    doParallel
+RoxygenNote: 7.3.1
 Suggests: 
     knitr,
     kableExtra,

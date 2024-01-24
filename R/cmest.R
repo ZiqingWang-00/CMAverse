@@ -412,6 +412,10 @@
 #' @importFrom ggplot2 ggproto ggplot geom_errorbar aes geom_point ylab geom_hline position_dodge2 
 #' scale_colour_hue theme element_blank facet_grid 
 #' @importFrom predint rqpois
+#' @importFrom mstate msfit
+#' @importFrom foreach %dopar% 
+#' @importFrom parallel detectCores makeCluster stopCluster
+#' @importFrom doSNOW registerDoSNOW
 #' 
 #' @export
 
@@ -521,10 +525,10 @@ cmest <- function(data = NULL, model = "rb",
     ## nboot grid
     i_grid = seq(1, nboot, 1)
     ## run in parallel
-    no_cores <- detectCores() 
+    no_cores <- parallel::detectCores() 
     cl <- parallel::makeCluster(no_cores-1)
     #registerDoParallel(cl)
-    registerDoSNOW(cl)
+    doSNOW::registerDoSNOW(cl)
     
     pb <- txtProgressBar(max = nboot, style = 3)
     progress <- function(n) setTxtProgressBar(pb, n)
@@ -532,12 +536,12 @@ cmest <- function(data = NULL, model = "rb",
     
     system.time({
       i_grid = seq(1, nboot, 1)
-      results <- foreach(index = i_grid,
+      results <- foreach::foreach(index = i_grid,
                          .options.snow = opts,
                          .verbose=F,
                          .combine = rbind,
                          .export = c("mstate_formula", "make_mstate_dat", "s_point_est", "dynamic_newd", "fixed_newd", "make_boot_ind"),
-                         .packages = c("mstate", "tidyverse")) %dopar% {
+                         .packages = c("mstate", "tidyverse", "parallel")) %dopar% {
                            s_point_est(i=index, mstate_bootlist,
                                        s_grid, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], newd100=fixed_newd[[3]], mstate_form,
                                        a, astar, exposure, mediator,
