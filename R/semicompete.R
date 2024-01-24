@@ -4,11 +4,11 @@
 ### EMint = T or F
 ### revert back to using foreach instead of boot(); attempt to add progress bar
 ### avoids using the super-assignment operator <<-
-library(tidyverse)
-library(mstate)
-library(foreach)
-library(doParallel)
-library(doSNOW)
+#library(tidyverse)
+#library(mstate)
+#library(foreach)
+#library(doParallel)
+#library(doSNOW)
 #library(progressr) ## use progressr for procession updates
 #library(doFuture)  ## attaches also foreach and future
 

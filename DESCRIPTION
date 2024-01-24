@@ -46,7 +46,10 @@ Imports:
     Matrix,
     EValue,
     ggplot2,
-    predint
+    predint,
+    mstate,
+    foreach,
+    doSNOW
 RoxygenNote: 7.1.1
 Suggests: 
     knitr,
