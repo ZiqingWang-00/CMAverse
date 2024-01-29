@@ -286,9 +286,7 @@ s_point_est <- function(i, mstate_bootlist,
   
   ## sum up the individual integrands as the estimate for P_01
   RD_vec = rep(NA, length(s_grid))
-  names(RD_vec) = paste("RD", s_grid, sep="")
   SD_vec = rep(NA, length(s_grid))
-  names(SD_vec) = paste("SD", s_grid, sep="")
   for (i in 1:length(RD_vec)){ # loop through each value in s_grid
     s = s_grid[i]
     up_to_ind = which.max(abs(time_vec - s) == min(abs(time_vec - s)))
@@ -312,6 +310,8 @@ s_point_est <- function(i, mstate_bootlist,
   }
   
   out_df = data.frame(RD = RD_vec, SD = SD_vec, TD = RD_vec+SD_vec)
+  out_df$s = 
+  names(SD_vec) = paste("SD", s_grid, sep="")
   
   return(out_df)
 }

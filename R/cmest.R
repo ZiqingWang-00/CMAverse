@@ -429,7 +429,7 @@ cmest <- function(data = NULL, model = "rb",
                   astar = 0, a = 1, mval = NULL, yval = NULL, basecval = NULL,
                   nboot = 200, boot.ci.type = "per", nRep = 5, multimp = FALSE, args_mice = NULL,
                   # additional arguments for multistate
-                  ymreg = "coxph", multistate_seed = 123, time_grid = NULL, bh_method = "breslow",
+                  ymreg = "coxph", multistate_seed = 123, s = NULL, bh_method = "breslow",
                   mediator_event = NULL) {
   # function call
   cl <- match.call()
@@ -454,7 +454,7 @@ cmest <- function(data = NULL, model = "rb",
     if(is.null(mediator_event)) stop("Unspecified mediator_event")
     if(is.null(event)) stop("Unspecified outcome event")
     #if(is.null(total_duration)|!is.numeric(total_duration)) stop("Unspecified total duration")
-    if(is.null(time_grid)|!is.numeric(time_grid)) stop("Unspecified time grid")
+    if(is.null(s)|!is.numeric(s)) stop("Unspecified s")
     if(!is.numeric(nboot)) stop("Unspecified nboot")
     if(length(basec) != 0){
       if(is.null(basecval)){
@@ -500,7 +500,7 @@ cmest <- function(data = NULL, model = "rb",
     ##### RUN THE MULTISTATE METHOD
     set.seed(multistate_seed)
     data = data.frame(data)
-    s_grid = time_grid
+    s_grid = s
     ## set up transition matrix
     trans = transMat(x=list(c(2, 3), c(3), c()), names=c(exposure, mediator, outcome)) 
     ## transition-dependent covariates
@@ -550,6 +550,9 @@ cmest <- function(data = NULL, model = "rb",
     })
     close(pb)
     stopCluster(cl)
+    
+    # clean up the data frame
+    
     return(results)
   }
   
