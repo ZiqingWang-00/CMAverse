@@ -4,11 +4,11 @@
 ### EMint = T or F
 ### revert back to using foreach instead of boot(); attempt to add progress bar
 ### avoids using the super-assignment operator <<-
-#library(tidyverse)
-#library(mstate)
-#library(foreach)
-#library(doParallel)
-#library(doSNOW)
+library(tidyverse)
+library(mstate)
+library(foreach)
+library(doParallel)
+library(doSNOW)
 #library(progressr) ## use progressr for procession updates
 #library(doFuture)  ## attaches also foreach and future
 
@@ -61,6 +61,7 @@ mstate_formula = function(data, exposure, mediator, basec, EMint){
   }
   ## create the formula for multistate modeling
   mstate_formula = as.formula(paste("Surv(Tstart, Tstop, status) ~ ", terms, "+ strata(trans)"))
+  #mstate_formula = as.formula(paste("Surv(Tstart, Tstop, status) ~ ", terms))
   return(mstate_formula)
 }
 
@@ -104,33 +105,39 @@ fixed_newd = function(mstate_data, trans, a, astar, exposure, mediator, basec, b
   colnames(M3000) = paste(mediator, ".", 3, sep="")
   ## covariate block
   C_blocks = list()
-  for (i in 1:length(basec)){
-    if (class(mstate_data[,basec[i]]) %in% c("numeric", "integer")){
-      C_blocks[[i]] = diag(x=as.numeric(basecval[i]), 3)
-      colnames(C_blocks[[i]]) = paste(basec[i], ".", seq(1,3), sep="")
-    } else { # if variable type is factor
-      nlevel = length(levels(mstate_data[,basec[i]])) # extract the number of levels (Including ref) in the factor variable
-      level_selected = which(levels(mstate_data[,basec[i]]) == basecval[i])
-      temp_mat = matrix(rep(0, 3*3*(nlevel-1)), nrow=3)
-      # DEBUG FROM HERE
-      if (nlevel > 2){
-        if (level_selected > 1){
-          start = 3*level_selected-5
-          end = start + 2
-          temp_mat[,start:end] = diag(1, 3)
-        } 
-        C_blocks[[i]] = temp_mat
-        colnames(C_blocks[[i]]) = paste(basec[i], rep(seq(1,(nlevel-1)), each=3), ".", seq(1,3), sep="")
-      } else {
-        C_blocks[[i]] = temp_mat
+  if (length(basec) > 0) {
+    for (i in 1:length(basec)){
+      if (class(mstate_data[,basec[i]]) %in% c("numeric", "integer")){
+        C_blocks[[i]] = diag(x=as.numeric(basecval[i]), 3)
         colnames(C_blocks[[i]]) = paste(basec[i], ".", seq(1,3), sep="")
+      } else { # if variable type is factor
+        nlevel = length(levels(mstate_data[,basec[i]])) # extract the number of levels (Including ref) in the factor variable
+        level_selected = which(levels(mstate_data[,basec[i]]) == basecval[i])
+        temp_mat = matrix(rep(0, 3*3*(nlevel-1)), nrow=3)
+        # DEBUG FROM HERE
+        if (nlevel > 2){
+          if (level_selected > 1){
+            start = 3*level_selected-5
+            end = start + 2
+            temp_mat[,start:end] = diag(1, 3)
+          } 
+          C_blocks[[i]] = temp_mat
+          colnames(C_blocks[[i]]) = paste(basec[i], rep(seq(1,(nlevel-1)), each=3), ".", seq(1,3), sep="")
+        } else {
+          C_blocks[[i]] = temp_mat
+          colnames(C_blocks[[i]]) = paste(basec[i], ".", seq(1,3), sep="")
+        }
       }
     }
-  }
-  C000 = do.call(cbind, C_blocks)
+    C000 = do.call(cbind, C_blocks)
+  } 
   
   ## combine components
-  newd000 = data.frame(cbind(A000, M3000, C000))
+  if (length(basec) > 0) {
+    newd000 = data.frame(cbind(A000, M3000, C000))
+  } else {
+    newd000 = data.frame(cbind(A000, M3000))
+  }
   newd000$trans = c(1,2,3)
   newd000$strata = c(1,2,3)
   attr(newd000,"trans") <- trans
@@ -202,19 +209,25 @@ make_boot_ind = function(data, nboot){
 
 # updated function calculates the RD on all s elements in the s_grid for each bootstrap sample i 
 ## passed in as an argument for boot()
-s_point_est <- function(i, mstate_bootlist,
+s_point_est <- function(i, mstate_bootlist, mstate_orig,
                         s_grid, newd000, newd010, newd100, mstate_form,
                         a, astar,
                         exposure, mediator,
                         #exposure, mediator, outcome, basec, mediator_event, event, covs_df, a
                         trans, bh_method, ymreg="coxph"){
   
-  mstate_df <- mstate_bootlist[[i]]
+  if (i > 0){
+    mstate_df <- mstate_bootlist[[i]]
+  } else {
+    mstate_df = mstate_orig
+  }
+  
   if (ymreg=="coxph"){
     joint_mod <- coxph(mstate_form, data = mstate_df, method = bh_method)
     joint_mod_call <- getCall(joint_mod)
     joint_mod_call$data <- mstate_df
     joint_mod_call$formula <- mstate_form
+    joint_mod_call$method <- bh_method
     joint_mod2 <- eval.parent(joint_mod_call)
   }
   print("fitted model")
@@ -227,7 +240,6 @@ s_point_est <- function(i, mstate_bootlist,
   cumhaz000 = cumhaz000_msfit$Haz
   cumhaz010 = cumhaz010_msfit$Haz
   cumhaz100 = cumhaz100_msfit$Haz
-  print(sum(cumhaz100 - cumhaz000))
   # extract transitions that are needed
   ## time var the same for all data frames below; all below dfs have the same # of rows
   cumhaz000_trans1 = subset(cumhaz000, trans==1)
@@ -251,68 +263,100 @@ s_point_est <- function(i, mstate_bootlist,
   # numerical integration
   ## use lapply to compute each integrand, corresponding to max_s
   ## for integral list for lower values of s, slice the list
-  print("start creating integrand list")
-  integrand_list = lapply(1:length(newd001_trans3_list), function(i){
-    # create the msfit object, extract cumulative hazards data frame
+  # create the msfit object, extract cumulative hazards data frame
+  pb1 <- txtProgressBar(min = 1, max = length(newd001_trans3_list), style = 3)
+  print("Preparing for numerical integration...")
+  newd001_trans3_cumhaz = lapply(1:length(newd001_trans3_list), function(i){
+    Sys.sleep(0.1)
+    setTxtProgressBar(pb1, i)
     newd001_trans3 = newd001_trans3_list[[i]]
-    newd000_trans3 = newd000_trans3_list[[i]]
     cumhaz001_trans3_msfit = msfit(joint_mod2, newd001_trans3, trans=trans)
-    cumhaz000_trans3_msfit = msfit(joint_mod2, newd000_trans3, trans=trans)
     cumhaz001_trans3 = cumhaz001_trans3_msfit$Haz
-    cumhaz000_trans3 = cumhaz000_trans3_msfit$Haz
-    # get transition-specific cumulative hazards
     cumhaz001_trans3 = subset(cumhaz001_trans3, trans==3)
-    cumhaz000_trans3 = subset(cumhaz000_trans3, trans==3)
-    cumhaz001_trans3_s = cumhaz001_trans3 %>% arrange(abs(time-max_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{12}(s|A=1, C=1)
-    cumhaz000_trans3_s = cumhaz000_trans3 %>% arrange(abs(time-max_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{12}(s|A=0, C=1)
-    # get the row indices to evaluate the integrand over
-    #time_ind = which(time_vec == newd001_trans3[3,"M.3"])
-    time_ind = which(time_vec == newd001_trans3[3, paste(mediator, ".", 3, sep="")])
-    #time_ind = min(time_ind, up_to_ind)
-    if (time_ind < length(newd001_trans3_list)){
-      # For RD
-      P_01_integrand = (exp(-cumhaz000_trans1$Haz[time_ind]-cumhaz000_trans2$Haz[time_ind])*haz000_trans1[time_ind]*exp(-cumhaz000_trans3_s+cumhaz000_trans3$Haz[time_ind])) * (min(max_s,time_vec[time_ind+1])-time_vec[time_ind])
-      P_g_01_integrand = (exp(-cumhaz000_trans1$Haz[time_ind]-cumhaz010_trans2$Haz[time_ind])*haz000_trans1[time_ind]*exp(-cumhaz001_trans3_s+cumhaz001_trans3$Haz[time_ind])) * (min(max_s,time_vec[time_ind+1])-time_vec[time_ind])
-      # for SD
-      sd_integrand1 = (exp(-cumhaz100_trans1$Haz[time_ind]-cumhaz010_trans2$Haz[time_ind]) * haz100_trans1[time_ind] * exp(-cumhaz001_trans3_s+cumhaz001_trans3$Haz[time_ind])) * (min(max_s,time_vec[time_ind+1])-time_vec[time_ind])
-    }else{
-      P_01_integrand = 0
-      P_g_01_integrand = 0
-      sd_integrand1 = 0
-    }
-    return(c(P_01 = P_01_integrand, P_g_01 = P_g_01_integrand, sd_integrand1 = sd_integrand1))
   })
+  pb2 <- txtProgressBar(min = 1, max = length(newd000_trans3_list), style = 3)
+  print("Preparing for numerical integration...")
+  newd000_trans3_cumhaz = lapply(1:length(newd000_trans3_list), function(i){
+    Sys.sleep(0.1)
+    setTxtProgressBar(pb2, i)
+    newd000_trans3 = newd000_trans3_list[[i]]
+    cumhaz000_trans3_msfit = msfit(joint_mod2, newd000_trans3, trans=trans)
+    cumhaz000_trans3 = cumhaz000_trans3_msfit$Haz
+    cumhaz000_trans3 = subset(cumhaz000_trans3, trans==3)
+  })
+  
+  print("start creating integrand list")
+  integrand_list = list()
+  for (j in 1:length(s_grid)){
+    curr_s = s_grid[j]
+    up_to_ind = which.max(abs(time_vec - curr_s) == min(abs(time_vec - curr_s)))
+    # lapply(1:length(newd001_trans3_list), function(i)
+    print(paste("Creating integrand list for time point ", curr_s))
+    integrand_list[[j]] = lapply(1:up_to_ind, function(i){
+      # compute cumelautive hazards
+      cumhaz001_trans3 = newd001_trans3_cumhaz[[i]]
+      cumhaz000_trans3 = newd000_trans3_cumhaz[[i]]
+      cumhaz001_trans3_s = cumhaz001_trans3 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{12}(s|A=1, C=1)
+      cumhaz000_trans3_s = cumhaz000_trans3 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{12}(s|A=0, C=1)
+      # get the row indices to evaluate the integrand over
+      newd001_trans3 = newd001_trans3_list[[i]]
+      newd000_trans3 = newd000_trans3_list[[i]]
+      time_ind = which(time_vec == newd001_trans3[3, paste(mediator, ".", 3, sep="")])
+      #time_ind = min(time_ind, up_to_ind)
+      if (time_ind <= up_to_ind){
+        # For RD
+        P_01_integrand = (exp(-cumhaz000_trans1$Haz[time_ind]-cumhaz000_trans2$Haz[time_ind])*haz000_trans1[time_ind]*exp(-cumhaz000_trans3_s+cumhaz000_trans3$Haz[time_ind])) * (min(max_s,time_vec[time_ind+1])-time_vec[time_ind])
+        P_g_01_integrand = (exp(-cumhaz000_trans1$Haz[time_ind]-cumhaz010_trans2$Haz[time_ind])*haz000_trans1[time_ind]*exp(-cumhaz001_trans3_s+cumhaz001_trans3$Haz[time_ind])) * (min(max_s,time_vec[time_ind+1])-time_vec[time_ind])
+        # for SD
+        sd_integrand1 = (exp(-cumhaz100_trans1$Haz[time_ind]-cumhaz010_trans2$Haz[time_ind]) * haz100_trans1[time_ind] * exp(-cumhaz001_trans3_s+cumhaz001_trans3$Haz[time_ind])) * (min(max_s,time_vec[time_ind+1])-time_vec[time_ind])
+        #time_sum = min(max_s,time_vec[time_ind+1])-time_vec[time_ind]
+      }else{
+        P_01_integrand = 0
+        P_g_01_integrand = 0
+        sd_integrand1 = 0
+      }
+      return(c(P_01 = P_01_integrand, P_g_01 = P_g_01_integrand, sd_integrand1 = sd_integrand1))
+    })
+  }
   print("finished creating integrand list")
   
   ## sum up the individual integrands as the estimate for P_01
   RD_vec = rep(NA, length(s_grid))
   SD_vec = rep(NA, length(s_grid))
-  for (i in 1:length(RD_vec)){ # loop through each value in s_grid
-    s = s_grid[i]
-    up_to_ind = which.max(abs(time_vec - s) == min(abs(time_vec - s)))
-    sums = colSums(do.call(rbind, integrand_list[1:up_to_ind]))
+  for (i in 1:length(s_grid)){ # loop through each value in s_grid
+    curr_s = s_grid[i]
+    up_to_ind = which.max(abs(time_vec - curr_s) == min(abs(time_vec - curr_s)))
+    sums = colSums(do.call(rbind, integrand_list[[i]][1:up_to_ind]))
     print(sums)
     P_01 = sums[1]
     P_g_01 = sums[2]
     sd_integral = sums[3]
     # estimate cumulative hazard up to the end time s
-    cumhaz000_trans1_s = cumhaz000_trans1 %>% arrange(abs(time-s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{01}(s|A=0,C=1)
-    cumhaz000_trans2_s = cumhaz000_trans2 %>% arrange(abs(time-s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{02}(s|A=0,C=1)
-    cumhaz010_trans2_s = cumhaz010_trans2 %>% arrange(abs(time-s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{02}(s|A=1,C=1)
-    cumhaz100_trans1_s = cumhaz100_trans1 %>% arrange(abs(time-s)) %>% filter(row_number()==1) %>% pull(Haz)
+    cumhaz000_trans1_s = cumhaz000_trans1 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{01}(s|A=0,C=1)
+    cumhaz000_trans2_s = cumhaz000_trans2 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{02}(s|A=0,C=1)
+    cumhaz010_trans2_s = cumhaz010_trans2 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{02}(s|A=1,C=1)
+    cumhaz100_trans1_s = cumhaz100_trans1 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz)
     # P_00 and P_g_00
     P_00 = exp(-cumhaz000_trans1_s-cumhaz000_trans2_s)
     P_g_00 = exp(-cumhaz000_trans1_s-cumhaz010_trans2_s)
     P_10 = exp(-cumhaz100_trans1_s-cumhaz010_trans2_s)
+    print(paste("P_00 is ", P_00))
+    print(paste("P_g_00 is ", P_g_00))
+    print(paste("P_10 is ", P_10))
     # compute RD
     RD_vec[i] = (P_g_00 + P_g_01) - (P_00 + P_01)
     SD_vec[i] = (P_10 + sd_integral) - (P_g_00 + P_g_01)
   }
-  
+ 
   out_df = data.frame(RD = RD_vec, SD = SD_vec, TD = RD_vec+SD_vec)
-  out_df$s = 
-  names(SD_vec) = paste("SD", s_grid, sep="")
+  out_df$s = s_grid
   
+  #out = list()
+  #out$out_df = out_df
+  #out$newd001_trans3_list = newd001_trans3_list
+  #out$cumhaz010 = cumhaz010
+
   return(out_df)
+  #return(out)
 }
 

@@ -521,6 +521,16 @@ cmest <- function(data = NULL, model = "rb",
     mstate_data_orig = make_mstate_dat(dat=data, mediator=mediator, outcome=outcome, mediator_event=mediator_event, event=event, trans=trans, covs_df=covs_df)
     fixed_newd = fixed_newd(mstate_data=mstate_data_orig, trans=trans, a=a, astar=astar, exposure=exposure, mediator=mediator, basec=basec, basecval=basecval)
     
+    # fit the joint multistate model on the original data and save the summary table
+    mstate_fit_orig = coxph(mstate_form, data = mstate_data_orig, method = bh_method) 
+    mstate_fit_orig_summ = summary(mstate_fit_orig)
+    
+    # compute the point estimate of RD and SD and TD on original data
+    pt_est = s_point_est(i=0, mstate_bootlist, mstate_data_orig,
+                         s_grid, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], newd100=fixed_newd[[3]], mstate_form,
+                         a, astar, exposure, mediator,
+                         trans, bh_method)
+    
     # PARALLEL computing
     ## nboot grid
     i_grid = seq(1, nboot, 1)
@@ -540,9 +550,10 @@ cmest <- function(data = NULL, model = "rb",
                          .options.snow = opts,
                          .verbose=F,
                          .combine = rbind,
-                         .export = c("mstate_formula", "make_mstate_dat", "s_point_est", "dynamic_newd", "fixed_newd", "make_boot_ind"),
+                         #.export = c("mstate_formula", "make_mstate_dat", "s_point_est", "dynamic_newd", "fixed_newd", "make_boot_ind"),
+                         .export = c("mstate_formula", "make_mstate_dat", "s_point_est", "dynamic_newd", "make_boot_ind"),
                          .packages = c("mstate", "tidyverse", "parallel")) %dopar% {
-                           s_point_est(i=index, mstate_bootlist,
+                           s_point_est(i=index, mstate_bootlist, mstate_data_orig,
                                        s_grid, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], newd100=fixed_newd[[3]], mstate_form,
                                        a, astar, exposure, mediator,
                                        trans, bh_method)
@@ -552,8 +563,22 @@ cmest <- function(data = NULL, model = "rb",
     stopCluster(cl)
     
     # clean up the data frame
+    results_summ = results %>% 
+      group_by(s) %>%
+      summarize(RD_median = median(RD),
+                RD_lower = quantile(RD, 0.025),
+                RD_higher = quantile(RD, 0.975),
+                SD_median = median(SD),
+                SD_lower = quantile(SD, 0.025),
+                SD_higher = quantile(SD, 0.975),
+                TD_median = median(TD),
+                TD_lower = quantile(TD, 0.025),
+                TD_higher = quantile(TD, 0.975))
     
-    return(results)
+    return(list(model_summary = mstate_fit_orig_summ,
+                pt_est = pt_est,
+                bootstrap_summary = results_summ,
+                raw_output = results))
   }
   
   ###################################################################################################
