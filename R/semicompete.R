@@ -82,27 +82,27 @@ fixed_newd = function(mstate_data, trans, a, astar, exposure, mediator, basec, b
   # create individual components
   ## exposure block
   if (class(mstate_data[,exposure]) %in% c("numeric", "integer")){
-    A000 = matrix(rep(as.numeric(astar),9), nrow=3)
-    colnames(A000) = paste(exposure, ".", seq(1,3), sep="")
+    A_blk = matrix(rep(as.numeric(astar),9), nrow=3)
+    colnames(A_blk) = paste(exposure, ".", seq(1,3), sep="")
   } else { # if the exposure is a factor
     nlevel = length(levels(mstate_data[,exposure])) # extract the number of levels (Including ref) in the factor variable
     level_selected = which(levels(mstate_data[,exposure]) == astar) # a = astar (ie, a inactive
     #print(paste("nlevel is ", nlevel))
-    A000 = matrix(rep(0,3*3*(nlevel-1)), nrow=3) # (nlevel-1) dummy variables created in mstate formatted data
+    A_blk = matrix(rep(0,3*3*(nlevel-1)), nrow=3) # (nlevel-1) dummy variables created in mstate formatted data
     if (level_selected > 1){ # level selected is not reference level
       start = 3 * level_selected - 5
       end = start + 2
-      A000[,start:end] = diag(1,3)
+      A_blk[,start:end] = diag(1,3)
     } 
     if (nlevel > 2){
-      colnames(A000) = paste(exposure, rep(seq(1,(nlevel-1)), each=3), ".", seq(1,3), sep="")
+      colnames(A_blk) = paste(exposure, rep(seq(1,(nlevel-1)), each=3), ".", seq(1,3), sep="")
     }else {
-      colnames(A000) = paste(exposure, ".", seq(1,3), sep="")
+      colnames(A_blk) = paste(exposure, ".", seq(1,3), sep="")
     }
   }
   ## mediator block
-  M3000 = matrix(rep(0,3), nrow=3) # time to mediator must be numeric
-  colnames(M3000) = paste(mediator, ".", 3, sep="")
+  M3_blk = matrix(rep(0,3), nrow=3) # time to mediator must be numeric
+  colnames(M3_blk) = paste(mediator, ".", 3, sep="")
   ## covariate block
   C_blocks = list()
   if (length(basec) > 0) {
@@ -113,8 +113,8 @@ fixed_newd = function(mstate_data, trans, a, astar, exposure, mediator, basec, b
       } else { # if variable type is factor
         nlevel = length(levels(mstate_data[,basec[i]])) # extract the number of levels (Including ref) in the factor variable
         level_selected = which(levels(mstate_data[,basec[i]]) == basecval[i])
+        #print(level_selected)
         temp_mat = matrix(rep(0, 3*3*(nlevel-1)), nrow=3)
-        # DEBUG FROM HERE
         if (nlevel > 2){
           if (level_selected > 1){
             start = 3*level_selected-5
@@ -124,76 +124,68 @@ fixed_newd = function(mstate_data, trans, a, astar, exposure, mediator, basec, b
           C_blocks[[i]] = temp_mat
           colnames(C_blocks[[i]]) = paste(basec[i], rep(seq(1,(nlevel-1)), each=3), ".", seq(1,3), sep="")
         } else {
+          if (level_selected > 1){
+            temp_mat = diag(1,3)
+          }
           C_blocks[[i]] = temp_mat
           colnames(C_blocks[[i]]) = paste(basec[i], ".", seq(1,3), sep="")
         }
       }
     }
-    C000 = do.call(cbind, C_blocks)
+    C_blk = do.call(cbind, C_blocks)
   } 
   
   ## combine components
   if (length(basec) > 0) {
-    newd000 = data.frame(cbind(A000, M3000, C000))
+    newd_A0M0 = data.frame(cbind(A_blk, M3_blk, C_blk))
   } else {
-    newd000 = data.frame(cbind(A000, M3000))
+    newd_A0M0 = data.frame(cbind(A_blk, M3_blk))
   }
-  newd000$trans = c(1,2,3)
-  newd000$strata = c(1,2,3)
-  attr(newd000,"trans") <- trans
-  class(newd000) <- c("msdata", "data.frame")
-
+  newd_A0M0$trans = c(1,2,3)
+  newd_A0M0$strata = c(1,2,3)
+  attr(newd_A0M0,"trans") <- trans
+  class(newd_A0M0) <- c("msdata", "data.frame")
+  
   # create newd010, newd100
-  newd010 = newd000
-  newd100 = newd000
+  newd_A1M0 = newd_A0M0
   if (class(mstate_data[,exposure]) %in% c("numeric", "integer")){
-    newd010[2,paste(exposure,".",2, sep="")] = as.numeric(a)
-    newd100[1,paste(exposure,".",1, sep="")] = as.numeric(a)
+    newd_A1M0[1,paste(exposure,".",1, sep="")] = as.numeric(a)
+    newd_A1M0[2,paste(exposure,".",2, sep="")] = as.numeric(a)
+    newd_A1M0[3,paste(exposure,".",3, sep="")] = as.numeric(a)
   } else{
     nlevel = length(levels(mstate_data[,exposure]))
     level_active = which(levels(mstate_data[,exposure]) == a) 
     if (level_active > 1){ # if active value is not the reference level
       if (nlevel > 2){
-        newd010[2,paste(exposure, (level_active-1), ".", 2, sep="")] = 1
-        newd100[1,paste(exposure, (level_active-1), ".", 1, sep="")] = 1
+        newd_A1M0[1,paste(exposure, (level_active-1), ".", 1, sep="")] = 1
+        newd_A1M0[2,paste(exposure, (level_active-1), ".", 2, sep="")] = 1
+        newd_A1M0[3,paste(exposure, (level_active-1), ".", 3, sep="")] = 1
       }else {
-        newd010[2,paste(exposure,".",2, sep="")] = 1
-        newd100[1,paste(exposure,".",1, sep="")] = 1
+        newd_A1M0[1,paste(exposure,".",1, sep="")] = 1
+        newd_A1M0[2,paste(exposure,".",2, sep="")] = 1
+        newd_A1M0[3,paste(exposure,".",3, sep="")] = 1
       }
     } 
   }
-  return(list(newd000=newd000, newd010=newd010, newd100=newd100))
+  return(list(newd_A0M0=newd_A0M0, newd_A1M0=newd_A1M0))
 }
 
 ### dynamic newd (newd001): slightly different for each bootstrap sample
 #### in cmest(), run this once for the biggest s. For all smaller s, only need to slice
-dynamic_newd = function(mstate_data, exposure, mediator, newd000, time_vec, max_s, a, trans){
+dynamic_newd = function(mstate_data, exposure, mediator, newd_M0, time_vec, max_s, trans){
   # returns a list of newd data frames for msfit
   up_to_ind = which.max(abs(time_vec - max_s) == min(abs(time_vec - max_s)))
+  #up_to_ind = min(which(time_vec >= max_s))
+  #up_to_ind = max(which(time_vec <= max_s))
   ## set up newdata as needed (transition 3 now has M)
-  ## C.1 = c(1,0,0) means C=1 for trans1, 0 for trans2, and 0 for trans3
-  ## newd001: A.1=0, A.2=0, A.3=1
-  newd001_list = lapply(time_vec[1:up_to_ind], function(time){
-    newd001 = newd000
-    if (class(mstate_data[,exposure]) %in% c("numeric", "integer")){
-      newd001[3,paste(exposure, ".", 3, sep="")] = as.numeric(a)
-    }else { # if the exposure is a factor
-      nlevel = length(levels(mstate_data[,exposure]))
-      level_active = which(levels(mstate_data[,exposure]) == a) 
-      if (level_active > 1){
-        if (nlevel > 2){
-          newd001[3,paste(exposure, (level_active-1), ".", 3, sep="")] = 1
-        }else{
-          newd001[3,paste(exposure, ".", 3, sep="")] = 1
-        }
-      }
-    }
-    newd001[3,paste(mediator, ".", 3, sep="")] = time
-    attr(newd001, "trans") <- trans
-    class(newd001) <- c("msdata", "data.frame")
-    return(newd001)
+  newd_Mt_list = lapply(time_vec[1:up_to_ind], function(time){
+    newd_Mt = newd_M0
+    newd_Mt[3,paste(mediator, ".", 3, sep="")] = time
+    attr(newd_Mt, "trans") <- trans
+    class(newd_Mt) <- c("msdata", "data.frame")
+    return(newd_Mt)
   })
-  return(newd001_list)
+  return(newd_Mt_list)
 }
 
 ## function to make bootstrap indices
@@ -210,7 +202,7 @@ make_boot_ind = function(data, nboot){
 # updated function calculates the RD on all s elements in the s_grid for each bootstrap sample i 
 ## passed in as an argument for boot()
 s_point_est <- function(i, mstate_bootlist, mstate_orig,
-                        s_grid, newd000, newd010, newd100, mstate_form,
+                        s_grid, newd_A0M0, newd_A1M0, mstate_form,
                         a, astar,
                         exposure, mediator,
                         #exposure, mediator, outcome, basec, mediator_event, event, covs_df, a
@@ -233,56 +225,53 @@ s_point_est <- function(i, mstate_bootlist, mstate_orig,
   print("fitted model")
   
   # use msfit() to get predicted cumulative hazards data frames
-  cumhaz000_msfit = msfit(joint_mod2, newd000, trans=trans) # for RD and SD
-  cumhaz010_msfit = msfit(joint_mod2, newd010, trans=trans) # for RD and SD
-  cumhaz100_msfit = msfit(joint_mod2, newd100, trans=trans) # for SD only
+  cumhaz_A0M0_msfit = msfit(joint_mod2, newd_A0M0, trans=trans) # for RD and SD
+  cumhaz_A1M0_msfit = msfit(joint_mod2, newd_A1M0, trans=trans) # for RD and SD
   # extract cumulative hazards from the msfit objects
-  cumhaz000 = cumhaz000_msfit$Haz
-  cumhaz010 = cumhaz010_msfit$Haz
-  cumhaz100 = cumhaz100_msfit$Haz
+  cumhaz_A0M0 = cumhaz_A0M0_msfit$Haz
+  cumhaz_A1M0 = cumhaz_A1M0_msfit$Haz
   # extract transitions that are needed
   ## time var the same for all data frames below; all below dfs have the same # of rows
-  cumhaz000_trans1 = subset(cumhaz000, trans==1)
-  cumhaz000_trans2 = subset(cumhaz000, trans==2)
-  cumhaz010_trans2 = subset(cumhaz010, trans==2)
-  cumhaz100_trans1 = subset(cumhaz100, trans==1)
+  cumhaz_A0M0_trans1 = subset(cumhaz_A0M0, trans==1)
+  cumhaz_A0M0_trans2 = subset(cumhaz_A0M0, trans==2)
+  cumhaz_A1M0_trans1 = subset(cumhaz_A1M0, trans==1)
+  cumhaz_A1M0_trans2 = subset(cumhaz_A1M0, trans==2)
   # populate the hazard grid
-  time_vec = cumhaz000_trans1$time
-  n_grid = nrow(cumhaz000_trans1)
-  haz000_trans1 = rep(NA, n_grid) # grids for hazard \alpha_{01}
-  haz100_trans1 = rep(NA, n_grid)
-  for (i in 1:(nrow(cumhaz000_trans1)-1)){
-    haz000_trans1[i]=(cumhaz000_trans1$Haz[i+1]-cumhaz000_trans1$Haz[i])/(time_vec[i+1]-time_vec[i])
-    haz100_trans1[i]=(cumhaz100_trans1$Haz[i+1]-cumhaz100_trans1$Haz[i])/(time_vec[i+1]-time_vec[i])
+  time_vec = cumhaz_A0M0_trans1$time
+  #print(paste("The range of time vec is ", range(time_vec)))
+  n_grid = nrow(cumhaz_A0M0_trans1)
+  haz_A0M0_trans1 = rep(NA, n_grid) # grids for hazard \alpha_{01}
+  haz_A1M0_trans1 = rep(NA, n_grid)
+  for (i in 1:n_grid){
+    haz_A0M0_trans1[i]=(cumhaz_A0M0_trans1$Haz[i+1]-cumhaz_A0M0_trans1$Haz[i])/(time_vec[i+1]-time_vec[i])
+    haz_A1M0_trans1[i]=(cumhaz_A1M0_trans1$Haz[i+1]-cumhaz_A1M0_trans1$Haz[i])/(time_vec[i+1]-time_vec[i])
   }
   
-  # get the index to slice the newd001 list
+  # get the index to slice the newd_Mt_list list
   max_s = max(s_grid)
-  newd001_trans3_list = dynamic_newd(mstate_df, exposure, mediator, newd000, time_vec, max_s, a, trans) # active - a=1
-  newd000_trans3_list = dynamic_newd(mstate_df, exposure, mediator, newd000, time_vec, max_s, astar, trans) # reference - a=0=astar
+  newdA1Mt_list = dynamic_newd(mstate_df, exposure, mediator, newd_A1M0, time_vec, max_s, trans) # active - a=1
+  newdA0Mt_list = dynamic_newd(mstate_df, exposure, mediator, newd_A0M0, time_vec, max_s, trans) # reference - a=0=astar
   # numerical integration
   ## use lapply to compute each integrand, corresponding to max_s
   ## for integral list for lower values of s, slice the list
   # create the msfit object, extract cumulative hazards data frame
-  pb1 <- txtProgressBar(min = 1, max = length(newd001_trans3_list), style = 3)
+  pb1 <- txtProgressBar(min = 1, max = length(newdA1Mt_list), style = 3)
   print("Preparing for numerical integration...")
-  newd001_trans3_cumhaz = lapply(1:length(newd001_trans3_list), function(i){
+  newdA1Mt_list_cumhaz = lapply(1:length(newdA1Mt_list), function(i){
     Sys.sleep(0.1)
     setTxtProgressBar(pb1, i)
-    newd001_trans3 = newd001_trans3_list[[i]]
-    cumhaz001_trans3_msfit = msfit(joint_mod2, newd001_trans3, trans=trans)
-    cumhaz001_trans3 = cumhaz001_trans3_msfit$Haz
-    cumhaz001_trans3 = subset(cumhaz001_trans3, trans==3)
+    newdA1Mt_msfit = msfit(joint_mod2, newdA1Mt_list[[i]], trans=trans)
+    cumhaz_A1Mt = newdA1Mt_msfit$Haz
+    cumhaz_A1Mt_trans3 = subset(cumhaz_A1Mt, trans==3) 
   })
-  pb2 <- txtProgressBar(min = 1, max = length(newd000_trans3_list), style = 3)
+  pb2 <- txtProgressBar(min = 1, max = length(newdA0Mt_list), style = 3)
   print("Preparing for numerical integration...")
-  newd000_trans3_cumhaz = lapply(1:length(newd000_trans3_list), function(i){
+  newdA0Mt_list_cumhaz = lapply(1:length(newdA0Mt_list), function(i){
     Sys.sleep(0.1)
     setTxtProgressBar(pb2, i)
-    newd000_trans3 = newd000_trans3_list[[i]]
-    cumhaz000_trans3_msfit = msfit(joint_mod2, newd000_trans3, trans=trans)
-    cumhaz000_trans3 = cumhaz000_trans3_msfit$Haz
-    cumhaz000_trans3 = subset(cumhaz000_trans3, trans==3)
+    newdA0Mt_msfit = msfit(joint_mod2, newdA0Mt_list[[i]], trans=trans)
+    cumhaz_A0Mt = newdA0Mt_msfit$Haz
+    cumhaz_A0Mt_trans3 = subset(cumhaz_A0Mt, trans==3)
   })
   
   print("start creating integrand list")
@@ -290,25 +279,27 @@ s_point_est <- function(i, mstate_bootlist, mstate_orig,
   for (j in 1:length(s_grid)){
     curr_s = s_grid[j]
     up_to_ind = which.max(abs(time_vec - curr_s) == min(abs(time_vec - curr_s)))
+    #up_to_ind = max(which(time_vec <= curr_s))
+    #print(up_to_ind)
     # lapply(1:length(newd001_trans3_list), function(i)
-    print(paste("Creating integrand list for time point ", curr_s))
+    #print(paste("Creating integrand list for time point s =", curr_s))
     integrand_list[[j]] = lapply(1:up_to_ind, function(i){
       # compute cumelautive hazards
-      cumhaz001_trans3 = newd001_trans3_cumhaz[[i]]
-      cumhaz000_trans3 = newd000_trans3_cumhaz[[i]]
-      cumhaz001_trans3_s = cumhaz001_trans3 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{12}(s|A=1, C=1)
-      cumhaz000_trans3_s = cumhaz000_trans3 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{12}(s|A=0, C=1)
+      cumhaz_A1Mt = newdA1Mt_list_cumhaz[[i]]
+      cumhaz_A0Mt = newdA0Mt_list_cumhaz[[i]]
+      cumhaz_A1Mt_s = cumhaz_A1Mt %>% arrange(abs(curr_s-time)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{12}(s|A=1, C=1)
+      cumhaz_A0Mt_s = cumhaz_A0Mt %>% arrange(abs(curr_s-time)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{12}(s|A=0, C=1)
       # get the row indices to evaluate the integrand over
-      newd001_trans3 = newd001_trans3_list[[i]]
-      newd000_trans3 = newd000_trans3_list[[i]]
-      time_ind = which(time_vec == newd001_trans3[3, paste(mediator, ".", 3, sep="")])
+      newdA1Mt = newdA1Mt_list[[i]]
+      newdA0Mt = newdA1Mt_list[[i]]
+      time_ind = which(time_vec == newdA1Mt[3, paste(mediator, ".", 3, sep="")])
       #time_ind = min(time_ind, up_to_ind)
       if (time_ind <= up_to_ind){
         # For RD
-        P_01_integrand = (exp(-cumhaz000_trans1$Haz[time_ind]-cumhaz000_trans2$Haz[time_ind])*haz000_trans1[time_ind]*exp(-cumhaz000_trans3_s+cumhaz000_trans3$Haz[time_ind])) * (min(max_s,time_vec[time_ind+1])-time_vec[time_ind])
-        P_g_01_integrand = (exp(-cumhaz000_trans1$Haz[time_ind]-cumhaz010_trans2$Haz[time_ind])*haz000_trans1[time_ind]*exp(-cumhaz001_trans3_s+cumhaz001_trans3$Haz[time_ind])) * (min(max_s,time_vec[time_ind+1])-time_vec[time_ind])
+        P_01_integrand = (exp(-cumhaz_A0M0_trans1$Haz[time_ind]-cumhaz_A0M0_trans2$Haz[time_ind]) * haz_A0M0_trans1[time_ind] * exp(-cumhaz_A0Mt_s+cumhaz_A0Mt$Haz[time_ind])) * (min(curr_s,time_vec[time_ind+1])-time_vec[time_ind])
+        P_g_01_integrand = (exp(-cumhaz_A0M0_trans1$Haz[time_ind]-cumhaz_A1M0_trans2$Haz[time_ind]) * haz_A0M0_trans1[time_ind] * exp(-cumhaz_A1Mt_s+cumhaz_A1Mt$Haz[time_ind])) * (min(curr_s,time_vec[time_ind+1])-time_vec[time_ind])
         # for SD
-        sd_integrand1 = (exp(-cumhaz100_trans1$Haz[time_ind]-cumhaz010_trans2$Haz[time_ind]) * haz100_trans1[time_ind] * exp(-cumhaz001_trans3_s+cumhaz001_trans3$Haz[time_ind])) * (min(max_s,time_vec[time_ind+1])-time_vec[time_ind])
+        sd_integrand1 = (exp(-cumhaz_A1M0_trans1$Haz[time_ind]-cumhaz_A1M0_trans2$Haz[time_ind]) * haz_A1M0_trans1[time_ind] * exp(-cumhaz_A1Mt_s+cumhaz_A1Mt$Haz[time_ind])) * (min(curr_s,time_vec[time_ind+1])-time_vec[time_ind])
         #time_sum = min(max_s,time_vec[time_ind+1])-time_vec[time_ind]
       }else{
         P_01_integrand = 0
@@ -332,14 +323,14 @@ s_point_est <- function(i, mstate_bootlist, mstate_orig,
     P_g_01 = sums[2]
     sd_integral = sums[3]
     # estimate cumulative hazard up to the end time s
-    cumhaz000_trans1_s = cumhaz000_trans1 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{01}(s|A=0,C=1)
-    cumhaz000_trans2_s = cumhaz000_trans2 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{02}(s|A=0,C=1)
-    cumhaz010_trans2_s = cumhaz010_trans2 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{02}(s|A=1,C=1)
-    cumhaz100_trans1_s = cumhaz100_trans1 %>% arrange(abs(time-curr_s)) %>% filter(row_number()==1) %>% pull(Haz)
+    cumhaz_A0M0_trans1_s = cumhaz_A0M0_trans1 %>% arrange(abs(curr_s-time)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{01}(s|A=0,C=1)
+    cumhaz_A0M0_trans2_s = cumhaz_A0M0_trans2 %>% arrange(abs(curr_s-time)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{02}(s|A=0,C=1)
+    cumhaz_A1M0_trans2_s = cumhaz_A1M0_trans2 %>% arrange(abs(curr_s-time)) %>% filter(row_number()==1) %>% pull(Haz) # \Lambda_{02}(s|A=1,C=1)
+    cumhaz_A1M0_trans1_s = cumhaz_A1M0_trans1 %>% arrange(abs(curr_s-time)) %>% filter(row_number()==1) %>% pull(Haz)
     # P_00 and P_g_00
-    P_00 = exp(-cumhaz000_trans1_s-cumhaz000_trans2_s)
-    P_g_00 = exp(-cumhaz000_trans1_s-cumhaz010_trans2_s)
-    P_10 = exp(-cumhaz100_trans1_s-cumhaz010_trans2_s)
+    P_00 = exp(-cumhaz_A0M0_trans1_s-cumhaz_A0M0_trans2_s)
+    P_g_00 = exp(-cumhaz_A0M0_trans1_s-cumhaz_A1M0_trans2_s)
+    P_10 = exp(-cumhaz_A1M0_trans1_s-cumhaz_A1M0_trans2_s)
     print(paste("P_00 is ", P_00))
     print(paste("P_g_00 is ", P_g_00))
     print(paste("P_10 is ", P_10))
@@ -347,16 +338,16 @@ s_point_est <- function(i, mstate_bootlist, mstate_orig,
     RD_vec[i] = (P_g_00 + P_g_01) - (P_00 + P_01)
     SD_vec[i] = (P_10 + sd_integral) - (P_g_00 + P_g_01)
   }
- 
+  
   out_df = data.frame(RD = RD_vec, SD = SD_vec, TD = RD_vec+SD_vec)
   out_df$s = s_grid
   
-  #out = list()
-  #out$out_df = out_df
-  #out$newd001_trans3_list = newd001_trans3_list
-  #out$cumhaz010 = cumhaz010
-
-  return(out_df)
-  #return(out)
+  out = list()
+  out$out_df = out_df
+  out$cumhaz_A0M0 = cumhaz_A0M0
+  out$cumhaz_A1M0 = cumhaz_A1M0
+  
+  #return(out_df)
+  return(out)
 }
 

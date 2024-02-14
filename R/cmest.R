@@ -527,7 +527,7 @@ cmest <- function(data = NULL, model = "rb",
     
     # compute the point estimate of RD and SD and TD on original data
     pt_est = s_point_est(i=0, mstate_bootlist, mstate_data_orig,
-                         s_grid, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], newd100=fixed_newd[[3]], mstate_form,
+                         s_grid, newd_A0M0=fixed_newd[[1]], newd_A1M0=fixed_newd[[2]], mstate_form,
                          a, astar, exposure, mediator,
                          trans, bh_method)
     
@@ -554,7 +554,7 @@ cmest <- function(data = NULL, model = "rb",
                          .export = c("mstate_formula", "make_mstate_dat", "s_point_est", "dynamic_newd", "make_boot_ind"),
                          .packages = c("mstate", "tidyverse", "parallel")) %dopar% {
                            s_point_est(i=index, mstate_bootlist, mstate_data_orig,
-                                       s_grid, newd000=fixed_newd[[1]], newd010=fixed_newd[[2]], newd100=fixed_newd[[3]], mstate_form,
+                                       s_grid, newd_A0M0=fixed_newd[[1]], newd_A1M0=fixed_newd[[2]], mstate_form,
                                        a, astar, exposure, mediator,
                                        trans, bh_method)
                          }
