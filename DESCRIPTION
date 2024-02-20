@@ -2,7 +2,8 @@ Package: CMAverse
 Type: Package
 Title: Causal Mediation Analysis
 Version: 0.1.0
-URL: https://bs1125.github.io/CMAverse/, https://github.com/BS1125/CMAverse
+URL: https://bs1125.github.io/CMAverse/,
+        https://github.com/BS1125/CMAverse
 Authors@R: c(
     person("Baoyi", "Shi", role = c("aut", "cre"), email = "bs3141@cumc.columbia.edu"),
     person("Christine", "Choirat", role = "aut", email = "cchoirat@gmail.com"),
@@ -29,37 +30,16 @@ Description: CMAverse provides a suite of functions for reproducible causal medi
     CMAverse can conduct multiple imputations for causal mediation analysis.
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
-Imports: 
-    ggdag,
-    stringr,
-    simex,
-    dplyr,
-    mice,
-    nnet,
-    MASS,
-    survey,
-    survival,
-    SuppDists,
-    boot,
-    msm,
-    Matrix,
-    EValue,
-    ggplot2,
-    predint,
-    mstate,
-    foreach,
-    parallel,
-    doSNOW,
-    doParallel
+Imports: ggdag, stringr, simex, dplyr, mice, nnet, MASS, survey,
+        survival, SuppDists, boot, msm, Matrix, EValue, ggplot2,
+        predint, mstate, foreach, parallel, doSNOW, doParallel
 RoxygenNote: 7.3.1
-Suggests: 
-    knitr,
-    kableExtra,
-    dagitty,
-    rmarkdown,
-    testthat,
-    covr
+Suggests: knitr, kableExtra, dagitty, rmarkdown, testthat, covr
 VignetteBuilder: knitr
 Depends: R (>= 2.10)
 BugReports: https://github.com/BS1125/CMAverse/issues
+NeedsCompilation: no
+Packaged: 2024-02-16 16:53:06 UTC; apple
+Author: Baoyi Shi [aut, cre],
+  Christine Choirat [aut],
+  Linda Valeri [aut]

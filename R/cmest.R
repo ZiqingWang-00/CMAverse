@@ -82,6 +82,11 @@
 #' @param x an object of class \code{cmest}
 #' @param object an object of class \code{cmest}
 #' @param digits minimal number of significant digits. See \link{print.default}.
+#' @param ymreg type of multistate survival model to be used. Currently supporting coxph only.
+#' @param multistate_seed The seed to be used when generating bootstrap datasets for multistate modeling.
+#' @param s The time beyond which survival probability is interested in multistate modeling.
+#' @param bh_method Method for estimating baseline hazards in multistate modeling. Currently supporting "breslow" only.
+#' @param mediator_event Event indicator for the mediator in multistate modeling.
 #' 
 #' @details
 #' 
@@ -543,6 +548,8 @@ cmest <- function(data = NULL, model = "rb",
     pb <- txtProgressBar(max = nboot, style = 3)
     progress <- function(n) setTxtProgressBar(pb, n)
     opts <- list(progress = progress)
+    cat("\n")
+    cat("Started bootstrapping...")
     
     system.time({
       i_grid = seq(1, nboot, 1)
@@ -571,9 +578,9 @@ cmest <- function(data = NULL, model = "rb",
                 SD_median = median(SD),
                 SD_lower = quantile(SD, 0.025),
                 SD_higher = quantile(SD, 0.975),
-                TD_median = median(TD),
-                TD_lower = quantile(TD, 0.025),
-                TD_higher = quantile(TD, 0.975))
+                TE_median = median(TE),
+                TE_lower = quantile(TE, 0.025),
+                TE_higher = quantile(TE, 0.975))
     
     return(list(model_summary = mstate_fit_orig_summ,
                 pt_est = pt_est,

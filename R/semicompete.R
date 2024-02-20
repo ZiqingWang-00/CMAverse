@@ -4,11 +4,11 @@
 ### EMint = T or F
 ### revert back to using foreach instead of boot(); attempt to add progress bar
 ### avoids using the super-assignment operator <<-
-library(tidyverse)
-library(mstate)
-library(foreach)
-library(doParallel)
-library(doSNOW)
+#library(tidyverse)
+#library(mstate)
+#library(foreach)
+#library(doParallel)
+#library(doSNOW)
 #library(progressr) ## use progressr for procession updates
 #library(doFuture)  ## attaches also foreach and future
 
@@ -222,7 +222,7 @@ s_point_est <- function(i, mstate_bootlist, mstate_orig,
     joint_mod_call$method <- bh_method
     joint_mod2 <- eval.parent(joint_mod_call)
   }
-  print("fitted model")
+  cat("Fitted model.\n")
   
   # use msfit() to get predicted cumulative hazards data frames
   cumhaz_A0M0_msfit = msfit(joint_mod2, newd_A0M0, trans=trans) # for RD and SD
@@ -256,7 +256,8 @@ s_point_est <- function(i, mstate_bootlist, mstate_orig,
   ## for integral list for lower values of s, slice the list
   # create the msfit object, extract cumulative hazards data frame
   pb1 <- txtProgressBar(min = 1, max = length(newdA1Mt_list), style = 3)
-  print("Preparing for numerical integration...")
+  cat("\n")
+  cat("Preparing for numerical integration (1)...\n")
   newdA1Mt_list_cumhaz = lapply(1:length(newdA1Mt_list), function(i){
     Sys.sleep(0.1)
     setTxtProgressBar(pb1, i)
@@ -265,7 +266,8 @@ s_point_est <- function(i, mstate_bootlist, mstate_orig,
     cumhaz_A1Mt_trans3 = subset(cumhaz_A1Mt, trans==3) 
   })
   pb2 <- txtProgressBar(min = 1, max = length(newdA0Mt_list), style = 3)
-  print("Preparing for numerical integration...")
+  cat("\n")
+  cat("Preparing for numerical integration (2)...\n")
   newdA0Mt_list_cumhaz = lapply(1:length(newdA0Mt_list), function(i){
     Sys.sleep(0.1)
     setTxtProgressBar(pb2, i)
@@ -274,7 +276,8 @@ s_point_est <- function(i, mstate_bootlist, mstate_orig,
     cumhaz_A0Mt_trans3 = subset(cumhaz_A0Mt, trans==3)
   })
   
-  print("start creating integrand list")
+  cat("\n")
+  cat("Start creating integrand list.\n")
   integrand_list = list()
   for (j in 1:length(s_grid)){
     curr_s = s_grid[j]
@@ -309,7 +312,7 @@ s_point_est <- function(i, mstate_bootlist, mstate_orig,
       return(c(P_01 = P_01_integrand, P_g_01 = P_g_01_integrand, sd_integrand1 = sd_integrand1))
     })
   }
-  print("finished creating integrand list")
+  cat("Finished creating integrand list.\n")
   
   ## sum up the individual integrands as the estimate for P_01
   RD_vec = rep(NA, length(s_grid))
@@ -318,7 +321,7 @@ s_point_est <- function(i, mstate_bootlist, mstate_orig,
     curr_s = s_grid[i]
     up_to_ind = which.max(abs(time_vec - curr_s) == min(abs(time_vec - curr_s)))
     sums = colSums(do.call(rbind, integrand_list[[i]][1:up_to_ind]))
-    print(sums)
+    #print(sums)
     P_01 = sums[1]
     P_g_01 = sums[2]
     sd_integral = sums[3]
@@ -331,23 +334,23 @@ s_point_est <- function(i, mstate_bootlist, mstate_orig,
     P_00 = exp(-cumhaz_A0M0_trans1_s-cumhaz_A0M0_trans2_s)
     P_g_00 = exp(-cumhaz_A0M0_trans1_s-cumhaz_A1M0_trans2_s)
     P_10 = exp(-cumhaz_A1M0_trans1_s-cumhaz_A1M0_trans2_s)
-    print(paste("P_00 is ", P_00))
-    print(paste("P_g_00 is ", P_g_00))
-    print(paste("P_10 is ", P_10))
+    #print(paste("P_00 is ", P_00))
+    #print(paste("P_g_00 is ", P_g_00))
+    #print(paste("P_10 is ", P_10))
     # compute RD
     RD_vec[i] = (P_g_00 + P_g_01) - (P_00 + P_01)
     SD_vec[i] = (P_10 + sd_integral) - (P_g_00 + P_g_01)
   }
   
-  out_df = data.frame(RD = RD_vec, SD = SD_vec, TD = RD_vec+SD_vec)
+  out_df = data.frame(RD = RD_vec, SD = SD_vec, TE = RD_vec+SD_vec)
   out_df$s = s_grid
   
-  out = list()
-  out$out_df = out_df
-  out$cumhaz_A0M0 = cumhaz_A0M0
-  out$cumhaz_A1M0 = cumhaz_A1M0
+  #out = list()
+  #out$out_df = out_df
+  #out$cumhaz_A0M0 = cumhaz_A0M0
+  #out$cumhaz_A1M0 = cumhaz_A1M0
   
-  #return(out_df)
-  return(out)
+  return(out_df)
+  #return(out)
 }
 

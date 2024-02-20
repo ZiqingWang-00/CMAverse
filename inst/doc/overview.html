@@ -1,0 +1,1968 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+<meta name="date" content="2024-02-16" />
+
+<title>Overview of Modeling Approaches for Causal Mediation Analysis</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>$(document).ready(function(){
+    if (typeof $('[data-toggle="tooltip"]').tooltip === 'function') {
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+    if ($('[data-toggle="popover"]').popover === 'function') {
+        $('[data-toggle="popover"]').popover();
+    }
+});
+</script>
+<style type="text/css">
+.lightable-minimal {
+border-collapse: separate;
+border-spacing: 16px 1px;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-minimal td {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal th {
+margin-left: 5px;
+margin-right: 5px;
+}
+.lightable-minimal thead tr:last-child th {
+border-bottom: 2px solid #00000050;
+empty-cells: hide;
+}
+.lightable-minimal tbody tr:first-child td {
+padding-top: 0.5em;
+}
+.lightable-minimal.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-minimal.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic {
+border-top: 0.16em solid #111111;
+border-bottom: 0.16em solid #111111;
+width: 100%;
+margin-bottom: 10px;
+margin: 10px 5px;
+}
+.lightable-classic tfoot tr td {
+border: 0;
+}
+.lightable-classic tfoot tr:first-child td {
+border-top: 0.14em solid #111111;
+}
+.lightable-classic caption {
+color: #222222;
+}
+.lightable-classic td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic thead tr:last-child th {
+border-bottom: 0.10em solid #111111;
+}
+.lightable-classic.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-classic-2 {
+border-top: 3px double #111111;
+border-bottom: 3px double #111111;
+width: 100%;
+margin-bottom: 10px;
+}
+.lightable-classic-2 tfoot tr td {
+border: 0;
+}
+.lightable-classic-2 tfoot tr:first-child td {
+border-top: 3px double #111111;
+}
+.lightable-classic-2 caption {
+color: #222222;
+}
+.lightable-classic-2 td {
+padding-left: 5px;
+padding-right: 5px;
+color: #222222;
+}
+.lightable-classic-2 th {
+padding-left: 5px;
+padding-right: 5px;
+font-weight: normal;
+color: #222222;
+}
+.lightable-classic-2 tbody tr:last-child td {
+border-bottom: 3px double #111111;
+}
+.lightable-classic-2 thead tr:last-child th {
+border-bottom: 1px solid #111111;
+}
+.lightable-classic-2.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-classic-2.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #EEE;
+border-collapse: collapse;
+margin-bottom: 10px;
+}
+.lightable-material tfoot tr td {
+border: 0;
+}
+.lightable-material tfoot tr:first-child td {
+border-top: 1px solid #EEE;
+}
+.lightable-material th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+}
+.lightable-material td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+border-top: 1px solid #eeeeee;
+}
+.lightable-material.lightable-hover tbody tr:hover {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody tr:nth-child(even) {
+background-color: #f5f5f5;
+}
+.lightable-material.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #ddd;
+}
+.lightable-material-dark {
+min-width: 100%;
+white-space: nowrap;
+table-layout: fixed;
+font-family: Roboto, sans-serif;
+border: 1px solid #FFFFFF12;
+border-collapse: collapse;
+margin-bottom: 10px;
+background-color: #363640;
+}
+.lightable-material-dark tfoot tr td {
+border: 0;
+}
+.lightable-material-dark tfoot tr:first-child td {
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark th {
+height: 56px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF60;
+}
+.lightable-material-dark td {
+height: 52px;
+padding-left: 16px;
+padding-right: 16px;
+color: #FFFFFF;
+border-top: 1px solid #FFFFFF12;
+}
+.lightable-material-dark.lightable-hover tbody tr:hover {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody tr:nth-child(even) {
+background-color: #FFFFFF12;
+}
+.lightable-material-dark.lightable-striped tbody td {
+border: 0;
+}
+.lightable-material-dark.lightable-striped thead tr:last-child th {
+border-bottom: 1px solid #FFFFFF12;
+}
+.lightable-paper {
+width: 100%;
+margin-bottom: 10px;
+color: #444;
+}
+.lightable-paper tfoot tr td {
+border: 0;
+}
+.lightable-paper tfoot tr:first-child td {
+border-top: 1px solid #00000020;
+}
+.lightable-paper thead tr:last-child th {
+color: #666;
+vertical-align: bottom;
+border-bottom: 1px solid #00000020;
+line-height: 1.15em;
+padding: 10px 5px;
+}
+.lightable-paper td {
+vertical-align: middle;
+border-bottom: 1px solid #00000010;
+line-height: 1.15em;
+padding: 7px 5px;
+}
+.lightable-paper.lightable-hover tbody tr:hover {
+background-color: #F9EEC1;
+}
+.lightable-paper.lightable-striped tbody tr:nth-child(even) {
+background-color: #00000008;
+}
+.lightable-paper.lightable-striped tbody td {
+border: 0;
+}
+</style>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Overview of Modeling Approaches for Causal
+Mediation Analysis</h1>
+<h4 class="date">2024-02-16</h4>
+
+
+
+<p>This document describes how the six causal mediation analysis
+approaches including <em>the regression-based approach</em> by <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3659198/">Valeri et
+al. (2013)</a> and <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4287269/">VanderWeele
+et al. (2014)</a>, <em>the weighting-based approach</em> by <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4287269/">VanderWeele
+et al. (2014)</a>, <em>the inverse odd-ratio weighting approach</em> by
+<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3954805/">Tchetgen
+Tchetgen (2013)</a>, <em>the natural effect model</em> by <a href="https://www.degruyter.com/view/journals/em/1/1/article-p131.xml?language=en">Vansteelandt
+et al. (2012)</a>, <em>the marginal structural model</em> by <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5560424/">VanderWeele
+et al. (2017)</a>, and <em>the <span class="math inline">\(g\)</span>-formula approach</em> by <a href="https://www.sciencedirect.com/science/article/pii/0270025586900886">Robins
+(1986)</a> are implemented by the <code>CMAverse</code> package. See
+publications of these approaches for methodological details.</p>
+<p><code>CMAverse</code> currently supports a single exposure, multiple
+sequential mediators and a single outcome. When multiple mediators are
+of interest, <code>CMAverse</code> estimates the joint mediated effect
+through the set of mediators. <code>CMAverse</code> also supports time
+varying confounders preceding the mediators.</p>
+<p>We categorize the causal mediation analysis approaches based on
+whether the approach can deal with mediator-outcome confounders affected
+by the exposure. Among the six approaches, only <em>The marginal
+structural model</em> and <em>the <span class="math inline">\(g\)</span>-formula approach</em> are able to deal
+with mediator-outcome confounders affected by the exposure.</p>
+<p>In this document, the outcome and the exposure are denoted as <span class="math inline">\(Y\)</span> and <span class="math inline">\(A\)</span> respectively. The set of
+exposure-mediator confounders, exposure-outcome confounders and
+mediator-outcome confounders not affected by the exposure is denoted as
+<span class="math inline">\(C\)</span>. The set of mediators is denoted
+as <span class="math inline">\(M\)</span> and <span class="math inline">\(M=(M_1,...,M_k)\)</span> follows the temporal
+order. The set of mediator-outcome confounders affected by the exposure
+is denoted as <span class="math inline">\(L\)</span> and <span class="math inline">\(L=(L_1,...,L_s)\)</span> follows the temporal
+order.</p>
+<p>Since weights calculated from noncategorical variables are unstable,
+which hurts the performance of effect estimation and inference, weighted
+approaches can be implemented only for categorical exposure and
+mediator(s).</p>
+<div id="no-confounders-affected-by-the-exposure" class="section level1">
+<h1>No Confounders Affected by the Exposure</h1>
+<div id="dag" class="section level2">
+<h2>DAG</h2>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAEgCAYAAABchszxAAAEDmlDQ1BrQ0dDb2xvclNwYWNlR2VuZXJpY1JHQgAAOI2NVV1oHFUUPpu5syskzoPUpqaSDv41lLRsUtGE2uj+ZbNt3CyTbLRBkMns3Z1pJjPj/KRpKT4UQRDBqOCT4P9bwSchaqvtiy2itFCiBIMo+ND6R6HSFwnruTOzu5O4a73L3PnmnO9+595z7t4LkLgsW5beJQIsGq4t5dPis8fmxMQ6dMF90A190C0rjpUqlSYBG+PCv9rt7yDG3tf2t/f/Z+uuUEcBiN2F2Kw4yiLiZQD+FcWyXYAEQfvICddi+AnEO2ycIOISw7UAVxieD/Cyz5mRMohfRSwoqoz+xNuIB+cj9loEB3Pw2448NaitKSLLRck2q5pOI9O9g/t/tkXda8Tbg0+PszB9FN8DuPaXKnKW4YcQn1Xk3HSIry5ps8UQ/2W5aQnxIwBdu7yFcgrxPsRjVXu8HOh0qao30cArp9SZZxDfg3h1wTzKxu5E/LUxX5wKdX5SnAzmDx4A4OIqLbB69yMesE1pKojLjVdoNsfyiPi45hZmAn3uLWdpOtfQOaVmikEs7ovj8hFWpz7EV6mel0L9Xy23FMYlPYZenAx0yDB1/PX6dledmQjikjkXCxqMJS9WtfFCyH9XtSekEF+2dH+P4tzITduTygGfv58a5VCTH5PtXD7EFZiNyUDBhHnsFTBgE0SQIA9pfFtgo6cKGuhooeilaKH41eDs38Ip+f4At1Rq/sjr6NEwQqb/I/DQqsLvaFUjvAx+eWirddAJZnAj1DFJL0mSg/gcIpPkMBkhoyCSJ8lTZIxk0TpKDjXHliJzZPO50dR5ASNSnzeLvIvod0HG/mdkmOC0z8VKnzcQ2M/Yz2vKldduXjp9bleLu0ZWn7vWc+l0JGcaai10yNrUnXLP/8Jf59ewX+c3Wgz+B34Df+vbVrc16zTMVgp9um9bxEfzPU5kPqUtVWxhs6OiWTVW+gIfywB9uXi7CGcGW/zk98k/kmvJ95IfJn/j3uQ+4c5zn3Kfcd+AyF3gLnJfcl9xH3OfR2rUee80a+6vo7EK5mmXUdyfQlrYLTwoZIU9wsPCZEtP6BWGhAlhL3p2N6sTjRdduwbHsG9kq32sgBepc+xurLPW4T9URpYGJ3ym4+8zA05u44QjST8ZIoVtu3qE7fWmdn5LPdqvgcZz8Ww8BWJ8X3w0PhQ/wnCDGd+LvlHs8dRy6bLLDuKMaZ20tZrqisPJ5ONiCq8yKhYM5cCgKOu66Lsc0aYOtZdo5QCwezI4wm9J/v0X23mlZXOfBjj8Jzv3WrY5D+CsA9D7aMs2gGfjve8ArD6mePZSeCfEYt8CONWDw8FXTxrPqx/r9Vt4biXeANh8vV7/+/16ffMD1N8AuKD/A/8leAvFY9bLAAAAOGVYSWZNTQAqAAAACAABh2kABAAAAAEAAAAaAAAAAAACoAIABAAAAAEAAAJAoAMABAAAAAEAAAEgAAAAADIjr+EAAEAASURBVHgB7Z1njFxX+cZP7OA4jnvvvRCvve6OHfcW24mMRIgUhBAg+BA+RAIJRBGITzQlQYIPSCAFJCAIhGiJg53EvXd7XROXuK7L2uteEjvl/8/vwLVnvW1m9t4755z7HMne3dmZW37n7sxz3/O+z/vA/30yjIYIiIAIiIAIiIAIZIhAswydq05VBERABERABERABCwBCSBdCCIgAiIgAiIgApkjIAGUuSnXCYuACIiACIiACEgA6RoQAREQAREQARHIHAEJoMxNuU5YBERABERABERAAkjXgAiIgAiIgAiIQOYISABlbsp1wiIgAiIgAiIgAhJAugZEQAREQAREQAQyR0ACKHNTrhMWAREQAREQARGQANI1IAIiIAIiIAIikDkCEkCZm3KdsAiIgAiIgAiIgASQrgEREAEREAEREIHMEZAAytyU64RFQAREQAREQAQyK4AuXLhgzp8/rytABERABERABEQggwQyJYCqq6vNc889Zx599FHTtWtX061bN9OrVy/z61//OoNTr1MWAREQAREQgewSeDArp3716lUzf/58w9cvf/nLZsGCBaaqqsr89a9/Nc8//7zp37+/eeqpp7KCQ+cpAiIgAiIgApkm8MD/fTKyQGDu3Llmy5YtZteuXWbw4ME1TnnWrFnmyJEjZv/+/aZt27Y1fqcfREAEREAEREAEwiOQiQjQtWvXzMqVK80LL7xQS/wwpb/97W/NihUrzJ07d8KbYZ2RCIiACIiACIhALQKZEEA7duwwBLomT55cCwAPDB061P6r85d6UAREQAREQAREIDgCmUiC3r59u504hI6GCIiACIiACIiACGRCALVq1crO9M2bNzXjIiAC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Y7yOiA+rPL///e+tw3S+20ryec4sgb311lvWYhvFSeht7ty51nhp/fr1SZ6/ti0CIiACIiACIlAPAdyfo0gQzcWJ8OTTaYFmqmVlZWb27Nk2nQVTxa9+9avmV7/6VT17Sv9hZwTQF7/4RbN7924LGgyoRMJl+A+QjNXYoJfJmTNnGnuafi8CIiACIiACIlAgAZawcIOmDQZ5uvkMxM43v/lNM378eFtiv2fPHptflM9r03iOEwKI5S6yy3/4wx+a73//+/a8UZ089vzzz5uXXnqpURbYdhe6VtnoRvUEERABERABEcgwAZa+zp49a44ePWpbYOABlG9yNKktkydPNlu3bjWrV682M2bMcIqkEwLoD3/4g/nKV75ilWFuiR2+BITbTp8+3WjpnVNUdTAiIAIiIAIi4DkBfIFY/uJzmeUvGqIWOr773e/apGj6dbo2nDBCpPoLVfntb3+7Bh+WtV588UXz6quvmmeeeabG7/SDCIiACIiACIhA/ASowKYBKs7Q5PH06tUr/p04sMWSC6BTp06ZVatWmRdeeMEmSOUyuXPnjvnd735nXn75ZQmgXDD6XgREQAREQARiJsByF4GHY8eO2a7v2NLgAh3qKHkZ/CuvvGLZPvvss7UYY6D0+c9/3ixbtsycPHmy1u/1gAiIgAiIgAiIQDwErl27Zv338AKiaitk8QOxkgugP/3pT2bq1KnWaruuKcRWm0QqqsI0REAEREAEREAEkiFAjs+4ceOc8elJ5izvbdWJJOh7h6PvREAEREAEREAERCB5AiWPACV/itqDCIiACIiACIiACNQkIAFUk4d+EgEREAEREAERyAABCaAMTLJOUQREQAREQAREoCYBCaCaPPSTCIiACIiACIhABghIAGVgknWKIiACIiACIiACNQlIANXkoZ9EQAREQAREQAQyQEACKAOTrFMUAREQAREQARGoSUACqCYP/SQCIiACIiACIpABAhJAGZhknaIIiIAIiIAIiEBNAhJANXnoJxEQAREQAREQgQwQkADKwCTrFEVABERABERABGoSkACqyUM/iYAIiIAIiIAIZICABFAGJlmnKAIiIAIiIAIiUJPA/wNIKQLnD78XfQAAAABJRU5ErkJggg==" /><!-- --></p>
+</div>
+<div id="estimands" class="section level2">
+<h2>Estimands</h2>
+<p>For a continuous outcome, causal effects are estimated on the
+difference scale (summarized in table 1). For a categorical, count, or
+survival outcome, causal effects are estimated on the ratio scale
+(summarized in table 2). See <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3659198/">Valeri et
+al. (2013)</a> and <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4220271/">VanderWeele
+(2015)</a> for details about these effects.</p>
+<table style="NAborder-bottom: 0; margin-left: auto; margin-right: auto;" class="table table-bordered table-striped table-hover table-responsive table-condensed">
+<caption>
+Table 1: Causal Effects on the Difference Scale
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Full Name
+</th>
+<th style="text-align:left;">
+Abbreviation
+</th>
+<th style="text-align:left;">
+Formula
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Controlled Direct Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(CDE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{am}-Y_{a^*m}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Pure Natural Direct Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(PNDE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aM_a^*}-Y_{a^*M_a^*}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Total Natural Direct Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(TNDE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aM_a}-Y_{a^*M_a}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Pure Natural Indirect Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(PNIE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{a^*M_a}-Y_{a^*M_a^*}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Total Natural Indirect Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(TNIE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aM_a}-Y_{aM_a^*}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Total Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(TE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(PNDE+TNIE\)</span> or <span class="math inline">\(TNDE+PNIE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Reference Interaction
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(INT_{ref}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(PNDE-CDE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Mediated Interaction
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(INT_{med}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(TNIE-PNIE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(CDE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{CDE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(CDE/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(INT_{ref}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{INT_{ref}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(INT_{ref}/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(INT_{med}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{INT_{med}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(INT_{med}/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(PNIE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{PNIE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(PNIE/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion Mediated
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(PM\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(TNIE/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion Attributable to Interaction
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(INT\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((INT_{ref}+INT_{med})/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion Eliminated
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(PE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((INT_{ref}+INT_{med}+PNIE)/TE\)</span>
+</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<span style="font-style: italic;">Note: </span>
+</td>
+</tr>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<sup></sup> <span class="math inline">\(a\)</span> and <span class="math inline">\(a^*\)</span> are the active and control values for
+<span class="math inline">\(A\)</span> respectively. <span class="math inline">\(m\)</span> is the value at which <span class="math inline">\(M\)</span> is controlled. <span class="math inline">\(M_a\)</span> denotes the counterfactual value of
+<span class="math inline">\(M\)</span> that would have been observed had
+<span class="math inline">\(A\)</span> been set to be <span class="math inline">\(a\)</span>. <span class="math inline">\(Y_{am}\)</span> denotes the counterfactual value
+of <span class="math inline">\(Y\)</span> that would have been observed
+had <span class="math inline">\(A\)</span> been set to be <span class="math inline">\(a\)</span>, and <span class="math inline">\(M\)</span> to be <span class="math inline">\(m\)</span>. <span class="math inline">\(Y_{aMa*}\)</span> denotes the counterfactual value
+of <span class="math inline">\(Y\)</span> that would have been observed
+had <span class="math inline">\(A\)</span> been set to be <span class="math inline">\(a\)</span>, and <span class="math inline">\(M\)</span> to be the counterfactual value <span class="math inline">\(M_{a*}\)</span>.
+</td>
+</tr>
+</tfoot>
+</table>
+<table style="NAborder-bottom: 0; margin-left: auto; margin-right: auto;" class="table table-bordered table-striped table-hover table-responsive">
+<caption>
+Table 2: Causal Effects on the Ratio Scale
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Full Name
+</th>
+<th style="text-align:left;">
+Abbreviation
+</th>
+<th style="text-align:left;">
+Formula
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Controlled Direct Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(R^{CDE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{am}]/E[Y_{a^*m}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Pure Natural Direct Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(R^{PNDE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aM_a^*}]/E[Y_{a^*M_a^*}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Total Natural Direct Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(R^{TNDE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aM_a}]/E[Y_{a^*M_a}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Pure Natural Indirect Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(R^{PNIE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{a^*M_a}]/E[Y_{a^*M_a^*}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Total Natural Indirect Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(R^{TNIE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aM_a}]/E[Y_{aM_a^*}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Total Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(R^{TE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(R^{PNDE}\times R^{TNIE}\)</span> or <span class="math inline">\(R^{TNDE}\times R^{PNIE}\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Excess Ratio due to Controlled Direct Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(ER^{CDE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((E[Y_{am}-Y_{a^*m}])/E[Y_{a^*M_a^*}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Excess Ratio due to Reference Interaction
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(ER^{INT_{ref}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(R^{PNDE}-1-ER^{CDE}\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Excess Ratio due to Mediated Interaction
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(ER^{INT_{med}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(R^{TNIE}*R^{PNDE}-R^{PNDE}-R^{PNIE}+1\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Excess Ratio due to Pure Natural Indirect Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(ER^{PNIE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(R^{PNIE}-1\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(ER^{CDE}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{ER^{CDE}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(ER^{CDE}/(R^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(ER^{INT_{ref}}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{ER^{INT_{ref}}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(ER^{INT_{ref}}/(R^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(ER^{INT_{med}}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{ER^{INT_{med}}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(ER^{INT_{med}}/(R^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(ER^{PNIE}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{ER^{PNIE}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(ER^{PNIE}/(R^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion Mediated
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(PM\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((R^{PNDE}*(R^{TNIE}-1))/(R^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion Attributable to Interaction
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(INT\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((ER^{INT_{ref}}+ER^{INT_{med}})/(R^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion Eliminated
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(PE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((ER^{INT_{ref}}+ER^{INT_{med}}+ER^{PNIE})/(R^{TE}-1)\)</span>
+</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<span style="font-style: italic;">Note: </span>
+</td>
+</tr>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<sup></sup> <span class="math inline">\(a\)</span> and <span class="math inline">\(a^*\)</span> are the active and control values for
+<span class="math inline">\(A\)</span> respectively. <span class="math inline">\(m\)</span> is the value at which <span class="math inline">\(M\)</span> is controlled. <span class="math inline">\(M_a\)</span> denotes the counterfactual value of
+<span class="math inline">\(M\)</span> that would have been observed had
+<span class="math inline">\(A\)</span> been set to be <span class="math inline">\(a\)</span>. <span class="math inline">\(Y_{am}\)</span> denotes the counterfactual value
+of <span class="math inline">\(Y\)</span> that would have been observed
+had <span class="math inline">\(A\)</span> been set to be <span class="math inline">\(a\)</span>, and <span class="math inline">\(M\)</span> to be <span class="math inline">\(m\)</span>. <span class="math inline">\(Y_{aMa*}\)</span> denotes the counterfactual value
+of <span class="math inline">\(Y\)</span> that would have been observed
+had <span class="math inline">\(A\)</span> been set to be <span class="math inline">\(a\)</span>, and <span class="math inline">\(M\)</span> to be the counterfactual value <span class="math inline">\(M_{a*}\)</span>. If <span class="math inline">\(Y\)</span> is categorical, <span class="math inline">\(E[Y]\)</span> represents the probability of <span class="math inline">\(Y=y\)</span> where <span class="math inline">\(y\)</span> is a pre-specified value of <span class="math inline">\(Y\)</span>.
+</td>
+</tr>
+</tfoot>
+</table>
+</div>
+<div id="the-regression-based-approach" class="section level2">
+<h2>The Regression-based Approach</h2>
+<p>With the regression-based approach, all causal effects are estimated
+through either closed-form parameter function estimation or direct
+counterfactual imputation estimation. Standard errors of causal effects
+are estimated through either the delta method or bootstrapping.</p>
+<div id="closed-form-parameter-function-estimation" class="section level3">
+<h3>Closed-form Parameter Function Estimation</h3>
+<p>Closed-form parameter function estimation is available when there is
+only a single mediator, i.e., <span class="math inline">\(M=M_1\)</span>. Also, <code>yreg</code> must be
+chosen from <code>linear</code>, <code>logistic</code>,
+<code>loglinear</code>, <code>poisson</code>, <code>quasipoisson</code>,
+<code>negbin</code>, <code>coxph</code>, <code>aft_exp</code> and
+<code>aft_weibull</code>. <code>mreg</code> must be chosen from
+<code>linear</code>, <code>logistic</code> and <code>multinomial</code>.
+To use <code>yreg = &quot;logistic&quot;</code> and <code>yreg = &quot;coxph&quot;</code> in
+closed-form parameter function estimation, the outcome must be rare.
+Additionally, the causal effects estimated through closed-form parameter
+function estimation are conditional on the value of <span class="math inline">\(C\)</span> specified by the <code>basecval</code>
+argument. Closed-form parameter functions are summarized below.</p>
+<div id="linear-yreg-linear-mreg-and-noncategorical-exposure" class="section level4">
+<h4>Linear <code>yreg</code>, Linear <code>mreg</code> and
+Noncategorical Exposure</h4>
+<p>If the exposure is not categorical, <code>yreg=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;linear&quot;)</code>, <code>CMAverse</code> estimates the
+causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a linear regression model for the mediator: <span class="math display">\[E[M|A,C]=\beta_0+\beta_1A+\beta_2&#39;C\]</span></p></li>
+<li><p>Fit a linear regression model for the outcome: <span class="math display">\[E[Y|A,M,C]=\theta_0+\theta_1A+\theta_2M+\theta_3AM+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(CDE\)</span>, <span class="math inline">\(PNDE\)</span>, <span class="math inline">\(TNDE\)</span>, <span class="math inline">\(PNIE\)</span> and <span class="math inline">\(TNIE\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(CDE=(\theta_1+\theta_3m)(a-a^*)\)</span></li>
+<li><span class="math inline">\(PNDE=\{\theta_1+\theta_3(\beta_0+\beta_1a^*+\beta_2&#39;c)\}(a-a^*)\)</span></li>
+<li><span class="math inline">\(TNDE=\{\theta_1+\theta_3(\beta_0+\beta_1a+\beta_2&#39;c)\}(a-a^*)\)</span></li>
+<li><span class="math inline">\(PNIE=(\theta_2\beta_1+\theta_3\beta_1a^*)(a-a^*)\)</span></li>
+<li><span class="math inline">\(TNIE=(\theta_2\beta_1+\theta_3\beta_1a)(a-a^*)\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 1.</p></li>
+</ol>
+</div>
+<div id="linear-yreg-linear-mreg-and-categorical-exposure" class="section level4">
+<h4>Linear <code>yreg</code>, Linear <code>mreg</code> and Categorical
+Exposure</h4>
+<p>If the exposure is categorical, <code>yreg=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;linear&quot;)</code>, <code>CMAverse</code> estimates the
+causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a linear regression model for the mediator: <span class="math display">\[E[M|A,C]=\beta_0+\sum_{h=1}^H\beta_{1h}I\{A=h\}+\beta_2&#39;C\]</span></p></li>
+<li><p>Fit a linear regression model for the outcome: <span class="math display">\[E[Y|A,M,C]=\theta_0+\sum_{h=1}^H\theta_{1h}I\{A=h\}+\theta_2M+\sum_{h=1}^H\theta_{3h}I\{A=h\}M+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(CDE\)</span>, <span class="math inline">\(PNDE\)</span>, <span class="math inline">\(TNDE\)</span>, <span class="math inline">\(PNIE\)</span> and <span class="math inline">\(TNIE\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(CDE=\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+(\sum_{h=1}^H\theta_{3h}I\{a=h\}-\sum_{h=1}^H\theta_{3h}I\{a^*=h\})m\)</span></li>
+<li><span class="math inline">\(PNDE=\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+(\sum_{h=1}^H\theta_{3h}I\{a=h\}-\sum_{h=1}^H\theta_{3h}I\{a^*=h\})(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)\)</span></li>
+<li><span class="math inline">\(TNDE=\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+(\sum_{h=1}^H\theta_{3h}I\{a=h\}-\sum_{h=1}^H\theta_{3h}I\{a^*=h\})(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)\)</span></li>
+<li><span class="math inline">\(PNIE=(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a^*=h\})(\sum_{h=1}^H\beta_{1h}I\{a=h\}-\sum_{h=1}^H\beta_{1h}I\{a^*=h\})\)</span></li>
+<li><span class="math inline">\(TNIE=(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a=h\})(\sum_{h=1}^H\beta_{1h}I\{a=h\}-\sum_{h=1}^H\beta_{1h}I\{a^*=h\})\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 1.</p></li>
+</ol>
+</div>
+<div id="linear-yreg-logistic-mreg-and-noncategorical-exposure" class="section level4">
+<h4>Linear <code>yreg</code>, Logistic <code>mreg</code> and
+Noncategorical Exposure</h4>
+<p>If the exposure is not categorical, <code>yreg=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;logistic&quot;)</code>, <code>CMAverse</code> estimates the
+causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a logistic regression model for the mediator: <span class="math display">\[logitE[M|A,C]=\beta_0+\beta_1A+\beta_2&#39;C\]</span></p></li>
+<li><p>Fit a linear regression model for the outcome: <span class="math display">\[E[Y|A,M,C]=\theta_0+\theta_1A+\theta_2M+\theta_3AM+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(CDE\)</span>, <span class="math inline">\(PNDE\)</span>, <span class="math inline">\(TNDE\)</span>, <span class="math inline">\(PNIE\)</span> and <span class="math inline">\(TNIE\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(CDE=(\theta_1+\theta_3m)(a-a^*)\)</span></li>
+<li><span class="math inline">\(PNDE=\{\theta_1+\theta_3\frac{exp(\beta_0+\beta_1a^*+\beta_2&#39;c)}{1+exp(\beta_0+\beta_1a^*+\beta_2&#39;c)}\}(a-a^*)\)</span></li>
+<li><span class="math inline">\(TNDE=\{\theta_1+\theta_3\frac{exp(\beta_0+\beta_1a+\beta_2&#39;c)}{1+exp(\beta_0+\beta_1a+\beta_2&#39;c)}\}(a-a^*)\)</span></li>
+<li><span class="math inline">\(PNIE=(\theta_2+\theta_3a^*)(\frac{exp(\beta_0+\beta_1a+\beta_2&#39;c)}{1+exp(\beta_0+\beta_1a+\beta_2&#39;c)}-\frac{exp(\beta_0+\beta_1a^*+\beta_2&#39;c)}{1+exp(\beta_0+\beta_1a^*+\beta_2&#39;c)})\)</span></li>
+<li><span class="math inline">\(TNIE=(\theta_2+\theta_3a)(\frac{exp(\beta_0+\beta_1a+\beta_2&#39;c)}{1+exp(\beta_0+\beta_1a+\beta_2&#39;c)}-\frac{exp(\beta_0+\beta_1a^*+\beta_2&#39;c)}{1+exp(\beta_0+\beta_1a^*+\beta_2&#39;c)})\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 1.</p></li>
+</ol>
+</div>
+<div id="linear-yreg-logistic-mreg-and-categorical-exposure" class="section level4">
+<h4>Linear <code>yreg</code>, Logistic <code>mreg</code> and Categorical
+Exposure</h4>
+<p>If the exposure is categorical, <code>yreg=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;logistic&quot;)</code>, <code>CMAverse</code> estimates the
+causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a logistic regression model for the mediator: <span class="math display">\[logitE[M|A,C]=\beta_0+\sum_{h=1}^H\beta_{1h}I\{A=h\}+\beta_2&#39;C\]</span></p></li>
+<li><p>Fit a linear regression model for the outcome: <span class="math display">\[E[Y|A,M,C]=\theta_0+\sum_{h=1}^H\theta_{1h}I\{A=h\}+\theta_2M+\sum_{h=1}^H\theta_{3h}I\{A=h\}M+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(CDE\)</span>, <span class="math inline">\(PNDE\)</span>, <span class="math inline">\(TNDE\)</span>, <span class="math inline">\(PNIE\)</span> and <span class="math inline">\(TNIE\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(CDE=\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+(\sum_{h=1}^H\theta_{3h}I\{a=h\}-\sum_{h=1}^H\theta_{3h}I\{a^*=h\})m\)</span></li>
+<li><span class="math inline">\(PNDE=\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+(\sum_{h=1}^H\theta_{3h}I\{a=h\}-\sum_{h=1}^H\theta_{3h}I\{a^*=h\})\frac{exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)}{1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)}\)</span></li>
+<li><span class="math inline">\(TNDE=\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+(\sum_{h=1}^H\theta_{3h}I\{a=h\}-\sum_{h=1}^H\theta_{3h}I\{a^*=h\})\frac{exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)}{1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)}\)</span></li>
+<li><span class="math inline">\(PNIE=(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a^*=h\})(\frac{exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)}{1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)}-\frac{exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)}{1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)})\)</span></li>
+<li><span class="math inline">\(TNIE=(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a=h\})(\frac{exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)}{1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)}-\frac{exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)}{1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)})\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 1.</p></li>
+</ol>
+</div>
+<div id="linear-yreg-multinomial-mreg-and-noncategorical-exposure" class="section level4">
+<h4>Linear <code>yreg</code>, Multinomial <code>mreg</code> and
+Noncategorical Exposure</h4>
+<p>If the exposure is not categorical, <code>yreg=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;multinomial&quot;)</code>, <code>CMAverse</code> estimates
+the causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a multinomial regression model for the mediator: <span class="math display">\[log\frac{E[M=j|A,C]}{E[M=0|A,C]}=\beta_{0j}+\beta_{1j}A+\beta_{2j}&#39;C,
+j=1,2,...,J\]</span></p></li>
+<li><p>Fit a linear regression model for the outcome: <span class="math display">\[E[Y|A,M,C]=\theta_0+\theta_1A+\sum_{j=1}^J\theta_{2j}I\{M=j\}+A\sum_{j=1}^J\theta_{3j}I\{M=j\}+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(CDE\)</span>, <span class="math inline">\(PNDE\)</span>, <span class="math inline">\(TNDE\)</span>, <span class="math inline">\(PNIE\)</span> and <span class="math inline">\(TNIE\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(CDE=(\theta_1+\sum_{j=1}^J\theta_{3j}I\{m=j\})(a-a^*)\)</span></li>
+<li><span class="math inline">\(PNDE=\{\theta_1+\frac{\sum_{j=1}^J\theta_{3j}exp(\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)}\}(a-a^*)\)</span></li>
+<li><span class="math inline">\(TNDE=\{\theta_1+\frac{\sum_{j=1}^J\theta_{3j}exp(\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)}\}(a-a^*)\)</span></li>
+<li><span class="math inline">\(PNIE=\frac{\sum_{j=1}^J(\theta_{2j}+\theta_{3j}a^*)exp(\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)}-\frac{\sum_{j=1}^J(\theta_{2j}+\theta_{3j}a^*)exp(\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)}\)</span></li>
+<li><span class="math inline">\(TNIE=\frac{\sum_{j=1}^J(\theta_{2j}+\theta_{3j}a)exp(\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)}-\frac{\sum_{j=1}^J(\theta_{2j}+\theta_{3j}a)exp(\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)}\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 1.</p></li>
+</ol>
+</div>
+<div id="linear-yreg-multinomial-mreg-and-categorical-exposure" class="section level4">
+<h4>Linear <code>yreg</code>, Multinomial <code>mreg</code> and
+Categorical Exposure</h4>
+<p>If the exposure is categorical, <code>yreg=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;multinomial&quot;)</code>, <code>CMAverse</code> estimates
+the causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a multinomial regression model for the mediator: <span class="math display">\[log\frac{E[M=j|A,C]}{E[M=0|A,C]}=\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{A=h\}+\beta_{2j}&#39;C,
+j=1,2,...,J\]</span></p></li>
+<li><p>Fit a linear regression model for the outcome: <span class="math display">\[E[Y|A,M,C]=\theta_0+\sum_{h=1}^H\theta_{1h}I\{A=h\}+\sum_{j=1}^J\theta_{2j}I\{M=j\}+\sum_{j=1}^J\sum_{h=1}^H\theta_{3jh}I\{M=j\}I\{A=h\}+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(CDE\)</span>, <span class="math inline">\(PNDE\)</span>, <span class="math inline">\(TNDE\)</span>, <span class="math inline">\(PNIE\)</span> and <span class="math inline">\(TNIE\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(CDE=\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+(\sum_{j=1}^J\sum_{h=1}^H\theta_{3jh}I\{m=j\}I\{a=h\}-\sum_{j=1}^J\sum_{h=1}^H\theta_{3jh}I\{m=j\}I\{a^*=h\})\)</span></li>
+<li><span class="math inline">\(PNDE=\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+\frac{\sum_{j=1}^J(\sum_{h=1}^H\theta_{3jh}I\{a=h\}-\sum_{h=1}^H\theta_{3jh}I\{a^*=h\})exp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)}\)</span></li>
+<li><span class="math inline">\(TNDE=\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+\frac{\sum_{j=1}^J(\sum_{h=1}^H\theta_{3jh}I\{a=h\}-\sum_{h=1}^H\theta_{3jh}I\{a^*=h\})exp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)}\)</span></li>
+<li><span class="math inline">\(PNIE=\frac{\sum_{j=1}^J(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a^*=h\})exp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)}-\frac{\sum_{j=1}^J(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a^*=h\})exp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)}\)</span></li>
+<li><span class="math inline">\(TNIE=\frac{\sum_{j=1}^J(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a=h\})exp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)}-\frac{\sum_{j=1}^J(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a=h\})exp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)}{1+\sum_{j=1}^Jexp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)}\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 1.</p></li>
+</ol>
+</div>
+<div id="nonlinear-yreg-linear-mreg-and-noncategorical-exposure" class="section level4">
+<h4>Nonlinear <code>yreg</code>, Linear <code>mreg</code> and
+Noncategorical Exposure</h4>
+<p>If the exposure is not categorical, <code>yreg!=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;linear&quot;)</code>, <code>CMAverse</code> estimates the
+causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a linear regression model for the mediator: <span class="math display">\[E[M|A,C]=\beta_0+\beta_1A+\beta_2&#39;C+\epsilon_M,\epsilon_M\sim
+N(0,\sigma^2)\]</span></p></li>
+<li><p>Fit the specified regression model for the outcome: <span class="math display">\[g(E[Y|A,M,C])=\theta_0+\theta_1A+\theta_2M+\theta_3AM+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(R^{CDE}\)</span>, <span class="math inline">\(R^{PNDE}\)</span>, <span class="math inline">\(R^{TNDE}\)</span>, <span class="math inline">\(R^{PNIE}\)</span>, <span class="math inline">\(R^{TNIE}\)</span> and <span class="math inline">\(ER^{CDE}\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(R^{CDE}=exp((\theta_1+\theta_3m)(a-a^*))\)</span></li>
+<li><span class="math inline">\(R^{PNDE}=exp(\{\theta_1+\theta_3(\beta_0+\beta_1a^*+\beta_2&#39;c+\theta_2\sigma^2)\}(a-a^*)+0.5\theta_3^2\sigma^2(a^2-a^{*2}))\)</span></li>
+<li><span class="math inline">\(R^{TNDE}=exp(\{\theta_1+\theta_3(\beta_0+\beta_1a+\beta_2&#39;c+\theta_2\sigma^2)\}(a-a^*)+0.5\theta_3^2\sigma^2(a^2-a^{*2}))\)</span></li>
+<li><span class="math inline">\(R^{PNIE}=exp((\theta_2\beta_1+\theta_3\beta_1a^*)(a-a^*))\)</span></li>
+<li><span class="math inline">\(R^{TNIE}=exp((\theta_2\beta_1+\theta_3\beta_1a)(a-a^*))\)</span></li>
+<li><span class="math inline">\(ER^{CDE}=(exp(\theta_1(a-a^*)+\theta_3am)-exp(\theta_3a^*m))exp(\theta_2m-(\theta_2+\theta_3a^*)(\beta_0+\beta_1a^*+\beta_2&#39;c)-0.5(\theta_2+\theta_3a^*)^2\sigma^2)\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 2.</p></li>
+</ol>
+</div>
+<div id="nonlinear-yreg-linear-mreg-and-categorical-exposure" class="section level4">
+<h4>Nonlinear <code>yreg</code>, Linear <code>mreg</code> and
+Categorical Exposure</h4>
+<p>If the exposure is categorical, <code>yreg!=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;linear&quot;)</code>, <code>CMAverse</code> estimates the
+causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a linear regression model for the mediator: <span class="math display">\[E[M|A,C]=\beta_0+\sum_{h=1}^H\beta_{1h}I\{A=h\}+\beta_2&#39;C+\epsilon_M,\epsilon_M\sim
+N(0,\sigma^2)\]</span></p></li>
+<li><p>Fit the specified regression model for the outcome: <span class="math display">\[g(E[Y|A,M,C])=\theta_0+\sum_{h=1}^H\theta_{1h}I\{A=h\}+\theta_2M+\sum_{h=1}^H\theta_{3h}I\{A=h\}M+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(R^{CDE}\)</span>, <span class="math inline">\(R^{PNDE}\)</span>, <span class="math inline">\(R^{TNDE}\)</span>, <span class="math inline">\(R^{PNIE}\)</span>, <span class="math inline">\(R^{TNIE}\)</span> and <span class="math inline">\(ER^{CDE}\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(R^{CDE}=exp(\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+(\sum_{h=1}^H\theta_{3h}I\{a=h\}-\sum_{h=1}^H\theta_{3h}I\{a^*=h\})m)\)</span></li>
+<li><span class="math inline">\(R^{PNDE}=exp(\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+(\sum_{h=1}^H\theta_{3h}I\{a=h\}-\sum_{h=1}^H\theta_{3h}I\{a^*=h\})(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c+\theta_2\sigma^2)+0.5\sigma^2(\sum_{h=1}^H\theta_{3h}^2I\{a=h\}-\sum_{h=1}^H\theta_{3h}^2I\{a^*=h\}))\)</span></li>
+<li><span class="math inline">\(R^{TNDE}=exp(\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+(\sum_{h=1}^H\theta_{3h}I\{a=h\}-\sum_{h=1}^H\theta_{3h}I\{a^*=h\})(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c+\theta_2\sigma^2)+0.5\sigma^2(\sum_{h=1}^H\theta_{3h}^2I\{a=h\}-\sum_{h=1}^H\theta_{3h}^2I\{a^*=h\}))\)</span></li>
+<li><span class="math inline">\(R^{PNIE}=exp(\theta_2(\sum_{h=1}^H\beta_{1h}I\{a=h\}-\sum_{h=1}^H\beta_{1h}I\{a^*=h\})+\sum_{h=1}^H\theta_{3h}I\{a^*=h\}(\sum_{h=1}^H\beta_{1h}I\{a=h\}-\sum_{h=1}^H\beta_{1h}I\{a^*=h\}))\)</span></li>
+<li><span class="math inline">\(R^{TNIE}=exp(\theta_2(\sum_{h=1}^H\beta_{1h}I\{a=h\}-\sum_{h=1}^H\beta_{1h}I\{a^*=h\})+\sum_{h=1}^H\theta_{3h}I\{a=h\}(\sum_{h=1}^H\beta_{1h}I\{a=h\}-\sum_{h=1}^H\beta_{1h}I\{a^*=h\}))\)</span></li>
+<li><span class="math inline">\(ER^{CDE}=(exp(\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+\sum_{h=1}^H\theta_{3h}I\{a=h\}m)-exp(\sum_{h=1}^H\theta_{3h}I\{a^*=h\}m))exp(\theta_2m-(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a^*=h\})(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)-0.5(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a^*=h\})^2\sigma^2)\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 2.</p></li>
+</ol>
+</div>
+<div id="nonlinear-yreg-logistic-mreg-and-noncategorical-exposure" class="section level4">
+<h4>Nonlinear <code>yreg</code>, Logistic <code>mreg</code> and
+Noncategorical Exposure</h4>
+<p>If the exposure is not categorical, <code>yreg!=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;logistic&quot;)</code>, <code>CMAverse</code> estimates the
+causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a logistic regression model for the mediator: <span class="math display">\[logitE[M|A,C]=\beta_0+\beta_1A+\beta_2&#39;C\]</span></p></li>
+<li><p>Fit the specified regression model for the outcome: <span class="math display">\[g(E[Y|A,M,C])=\theta_0+\theta_1A+\theta_2M+\theta_3AM+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(R^{CDE}\)</span>, <span class="math inline">\(R^{PNDE}\)</span>, <span class="math inline">\(R^{TNDE}\)</span>, <span class="math inline">\(R^{PNIE}\)</span>, <span class="math inline">\(R^{TNIE}\)</span> and <span class="math inline">\(ER^{CDE}\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(R^{CDE}=exp((\theta_1+\theta_3m)(a-a^*))\)</span></li>
+<li><span class="math inline">\(R^{PNDE}=\frac{exp(\theta_1a)\{1+exp(\theta_2+\theta_3a+\beta_0+\beta_1a^*+\beta_2&#39;c)\}}{exp(\theta_1a^*)\{1+exp(\theta_2+\theta_3a^*+\beta_0+\beta_1a^*+\beta_2&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{TNDE}=\frac{exp(\theta_1a)\{1+exp(\theta_2+\theta_3a+\beta_0+\beta_1a+\beta_2&#39;c)\}}{exp(\theta_1a^*)\{1+exp(\theta_2+\theta_3a^*+\beta_0+\beta_1a+\beta_2&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{PNIE}=\frac{\{1+exp(\beta_0+\beta_1a^*+\beta_2&#39;c)\}\{1+exp(\theta_2+\theta_3a^*+\beta_0+\beta_1a+\beta_2&#39;c)\}}{\{1+exp(\beta_0+\beta_1a+\beta_2&#39;c)\}\{1+exp(\theta_2+\theta_3a^*+\beta_0+\beta_1a^*+\beta_2&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{TNIE}=\frac{\{1+exp(\beta_0+\beta_1a^*+\beta_2&#39;c)\}\{1+exp(\theta_2+\theta_3a+\beta_0+\beta_1a+\beta_2&#39;c)\}}{\{1+exp(\beta_0+\beta_1a+\beta_2&#39;c)\}\{1+exp(\theta_2+\theta_3a+\beta_0+\beta_1a^*+\beta_2&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(ER^{CDE}=\frac{exp(\theta_2m)(exp(\theta_1(a-a^*)+\theta_3am)-exp(\theta_3a^*m))(1+exp(\beta_0+\beta_1a^*+\beta_2&#39;c))}{1+exp(\beta_0+\beta_1a^*+\beta_2&#39;c+\theta_2+\theta_3a^*)}\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 2.</p></li>
+</ol>
+</div>
+<div id="nonlinear-yreg-logistic-mreg-and-categorical-exposure" class="section level4">
+<h4>Nonlinear <code>yreg</code>, Logistic <code>mreg</code> and
+Categorical Exposure</h4>
+<p>If the exposure is categorical, <code>yreg!=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;logistic&quot;)</code>, <code>CMAverse</code> estimates the
+causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a logistic regression model for the mediator: <span class="math display">\[logitE[M|A,C]=\beta_0+\sum_{h=1}^H\beta_{1h}I\{A=h\}+\beta_2&#39;C\]</span></p></li>
+<li><p>Fit the specified regression model for the outcome: <span class="math display">\[g(E[Y|A,M,C])=\theta_0+\sum_{h=1}^H\theta_{1h}I\{A=h\}+\theta_2M+\sum_{h=1}^H\theta_{3h}I\{A=h\}M+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(R^{CDE}\)</span>, <span class="math inline">\(R^{PNDE}\)</span>, <span class="math inline">\(R^{TNDE}\)</span>, <span class="math inline">\(R^{PNIE}\)</span>, <span class="math inline">\(R^{TNIE}\)</span> and <span class="math inline">\(ER^{CDE}\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(R^{CDE}=exp(\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+(\sum_{h=1}^H\theta_{3h}I\{a=h\}-\sum_{h=1}^H\theta_{3h}I\{a^*=h\})m)\)</span></li>
+<li><span class="math inline">\(R^{PNDE}=\frac{exp(\sum_{h=1}^H\theta_{1h}I\{a=h\})\{1+exp(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a=h\}+\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)\}}{exp(\sum_{h=1}^H\theta_{1h}I\{a^*=h\})\{1+exp(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a^*=h\}+\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{TNDE}=\frac{exp(\sum_{h=1}^H\theta_{1h}I\{a=h\})\{1+exp(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a=h\}+\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)\}}{exp(\sum_{h=1}^H\theta_{1h}I\{a^*=h\})\{1+exp(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a^*=h\}+\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{PNIE}=\frac{\{1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)\}\{1+exp(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a^*=h\}+\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)\}}{\{1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)\}\{1+exp(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a^*=h\}+\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{TNIE}=\frac{\{1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)\}\{1+exp(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a=h\}+\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)\}}{\{1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a=h\}+\beta_2&#39;c)\}\{1+exp(\theta_2+\sum_{h=1}^H\theta_{3h}I\{a=h\}+\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(ER^{CDE}=\frac{exp(\theta_2m)(exp(\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+\sum_{h=1}^H\theta_{3h}I\{a=h\}m)-exp(\sum_{h=1}^H\theta_{3h}I\{a^*=h\}m))(1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c))}{1+exp(\beta_0+\sum_{h=1}^H\beta_{1h}I\{a^*=h\}+\beta_2&#39;c+\theta_2+\sum_{h=1}^H\theta_{3h}I\{a^*=h\})}\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 2.</p></li>
+</ol>
+</div>
+<div id="nonlinear-yreg-multinomial-mreg-and-noncategorical-exposure" class="section level4">
+<h4>Nonlinear <code>yreg</code>, Multinomial <code>mreg</code> and
+Noncategorical Exposure</h4>
+<p>If the exposure is not categorical, <code>yreg!=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;multinomial&quot;)</code>, <code>CMAverse</code> estimates
+the causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a multinomial regression model for the mediator: <span class="math display">\[log\frac{E[M=j|A,C]}{E[M=0|A,C]}=\beta_{0j}+\beta_{1j}A+\beta_{2j}&#39;C,
+j=1,2,...,J\]</span></p></li>
+<li><p>Fit the specified regression model for the outcome: <span class="math display">\[g(E[Y|A,M,C])=\theta_0+\theta_1A+\sum_{j=1}^J\theta_{2j}I\{M=j\}+A\sum_{j=1}^J\theta_{3j}I\{M=j\}+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(R^{CDE}\)</span>, <span class="math inline">\(R^{PNDE}\)</span>, <span class="math inline">\(R^{TNDE}\)</span>, <span class="math inline">\(R^{PNIE}\)</span>, <span class="math inline">\(R^{TNIE}\)</span> and <span class="math inline">\(ER^{CDE}\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(R^{CDE}=exp((\theta_1+\sum_{j=1}^J\theta_{3j}I\{m=j\})(a-a^*))\)</span></li>
+<li><span class="math inline">\(R^{PNDE}=\frac{exp(\theta_1a)\{1+\sum_{j=1}^Jexp(\theta_{2j}+\theta_{3j}a+\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)\}}{exp(\theta_1a^*)\{1+\sum_{j=1}^Jexp(\theta_{2j}+\theta_{3j}a^*+\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{TNDE}=\frac{exp(\theta_1a)\{1+\sum_{j=1}^Jexp(\theta_{2j}+\theta_{3j}a+\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)\}}{exp(\theta_1a^*)\{1+\sum_{j=1}^Jexp(\theta_{2j}+\theta_{3j}a^*+\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{PNIE}=\frac{\{1+\sum_{j=1}^Jexp(\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)\}\{1+\sum_{j=1}^Jexp(\theta_{2j}+\theta_{3j}a^*+\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)\}}{\{1+\sum_{j=1}^Jexp(\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)\}\{1+\sum_{j=1}^Jexp(\theta_{2j}+\theta_{3j}a^*+\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{TNIE}=\frac{\{1+\sum_{j=1}^Jexp(\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)\}\{1+\sum_{j=1}^Jexp(\theta_{2j}+\theta_{3j}a+\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)\}}{\{1+\sum_{j=1}^Jexp(\beta_{0j}+\beta_{1j}a+\beta_{2j}&#39;c)\}\{1+\sum_{j=1}^Jexp(\theta_{2j}+\theta_{3j}a+\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(ER^{CDE}=\frac{exp(\sum_{j=1}^J\theta_{2j}I\{m=j\})(1+\sum_{j=1}^Jexp(\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c))(exp(\theta_1(a-a^*)+a\sum_{j=1}^J\theta_{3j}I\{m=j\})-exp(a^*\sum_{j=1}^J\theta_{3j}I\{m=j\}))}{1+\sum_{j=1}^Jexp(\theta_{2j}+\theta_{3j}a^*+\beta_{0j}+\beta_{1j}a^*+\beta_{2j}&#39;c)}\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 2.</p></li>
+</ol>
+</div>
+<div id="nonlinear-yreg-multinomial-mreg-and-categorical-exposure" class="section level4">
+<h4>Nonlinear <code>yreg</code>, Multinomial <code>mreg</code> and
+Categorical Exposure</h4>
+<p>If the exposure is categorical, <code>yreg!=&quot;linear&quot;</code> and
+<code>mreg=list(&quot;multinomial&quot;)</code>, <code>CMAverse</code> estimates
+the causal effects by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a multinomial regression model for the mediator: <span class="math display">\[log\frac{E[M=j|A,C]}{E[M=0|A,C]}=\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{A=h\}+\beta_{2j}&#39;C,
+j=1,2,...,J\]</span></p></li>
+<li><p>Fit the specified regression model for the outcome: <span class="math display">\[g(E[Y|A,M,C])=\theta_0+\sum_{h=1}^H\theta_{1h}I\{A=h\}+\sum_{j=1}^J\theta_{2j}I\{M=j\}+\sum_{j=1}^J\sum_{h=1}^H\theta_{3jh}I\{M=j\}I\{A=h\}+\theta_4&#39;C\]</span></p></li>
+<li><p>Estimate <span class="math inline">\(R^{CDE}\)</span>, <span class="math inline">\(R^{PNDE}\)</span>, <span class="math inline">\(R^{TNDE}\)</span>, <span class="math inline">\(R^{PNIE}\)</span>, <span class="math inline">\(R^{TNIE}\)</span> and <span class="math inline">\(ER^{CDE}\)</span> by the following parameter
+functions:</p>
+<ul>
+<li><span class="math inline">\(R^{CDE}=exp(\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\}+\sum_{j=1}^J\sum_{h=1}^H\theta_{3jh}I\{m=l\}I\{a=h\}-\sum_{j=1}^J\sum_{h=1}^H\theta_{3jh}I\{m=l\}I\{a^*=h\})\)</span></li>
+<li><span class="math inline">\(R^{PNDE}=\frac{exp(\sum_{h=1}^H\theta_{1h}I\{a=h\})\{1+\sum_{j=1}^Jexp(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a=h\}+\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)\}}{exp(\sum_{h=1}^H\theta_{1h}I\{a^*=h\})\{1+\sum_{j=1}^Jexp(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a^*=h\}+\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{TNDE}=\frac{exp(\sum_{h=1}^H\theta_{1h}I\{a=h\})\{1+\sum_{j=1}^Jexp(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a=h\}+\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)\}}{exp(\sum_{h=1}^H\theta_{1h}I\{a^*=h\})\{1+\sum_{j=1}^Jexp(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a^*=h\}+\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{PNIE}=\frac{\{1+\sum_{j=1}^Jexp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)\}\{1+\sum_{j=1}^Jexp(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a^*=h\}+\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)\}}{\{1+\sum_{j=1}^Jexp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)\}\{1+\sum_{j=1}^Jexp(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a^*=h\}+\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(R^{TNIE}=\frac{\{1+\sum_{j=1}^Jexp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)\}\{1+\sum_{j=1}^Jexp(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a=h\}+\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)\}}{\{1+\sum_{j=1}^Jexp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a=h\}+\beta_{2j}&#39;c)\}\{1+\sum_{j=1}^Jexp(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a=h\}+\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)\}}\)</span></li>
+<li><span class="math inline">\(ER^{CDE}=\frac{exp(\sum_{j=1}^J\theta_{2j}I\{m=j\})(1+\sum_{j=1}^Jexp(\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c))(exp((\sum_{h=1}^H\theta_{1h}I\{a=h\}-\sum_{h=1}^H\theta_{1h}I\{a^*=h\})+\sum_{j=1}^J\sum_{h=1}^H\theta_{3jh}I\{a=h\}I\{m=j\})-exp(\sum_{j=1}^J\sum_{h=1}^H\theta_{3jh}I\{a^*=h\}I\{m=j\}))}{1+\sum_{j=1}^Jexp(\theta_{2j}+\sum_{h=1}^H\theta_{3jh}I\{a^*=h\}+\beta_{0j}+\sum_{h=1}^H\beta_{1jh}I\{a^*=h\}+\beta_{2j}&#39;c)}\)</span></li>
+</ul></li>
+<li><p>Calculate other effects using formulas in table 2.</p></li>
+</ol>
+</div>
+</div>
+<div id="direct-counterfactual-imputation-estimation" class="section level3">
+<h3>Direct Counterfactual Imputation Estimation</h3>
+<p><code>CMAverse</code> conducts direct counterfactual imputation
+estimation by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a regression model for <span class="math inline">\(E(Y|A,M,C)\)</span>. This regression model is
+specified by the <code>yreg</code> argument.</p></li>
+<li><p>For <span class="math inline">\(p=1,...,k\)</span>, fit a
+regression model for the distribution of <span class="math inline">\(M_p\)</span> given <span class="math inline">\(A\)</span> and <span class="math inline">\(C\)</span>. These regression models are specified
+by the <code>mreg</code> argument.</p></li>
+<li><p>For <span class="math inline">\(p=1,...,k\)</span> and <span class="math inline">\(i=1,...,n\)</span>, simulate the counterfactuals
+<span class="math inline">\(M_{a,p,i}\)</span> and <span class="math inline">\(M_{a^*,p,i}\)</span>.</p>
+<ul>
+<li>Simulate <span class="math inline">\(M_{a,p,i}\)</span> by randomly
+drawing a value from the distribution of <span class="math inline">\(M_{p}\)</span> given <span class="math inline">\(A=a,C=C_i\)</span>. Denote <span class="math inline">\(M_{a,i}=(M_{a,1,i},...,M_{a,k,i})^T\)</span>.</li>
+<li>Simulate <span class="math inline">\(M_{a^*,p,i}\)</span> by
+randomly drawing a value from the distribution of <span class="math inline">\(M_{p}\)</span> given <span class="math inline">\(A=a^*,C=C_i\)</span>. Denote <span class="math inline">\(M_{a^*,i}=(M_{a^*,1,i},...,M_{a^*,k,i})^T\)</span>.</li>
+</ul></li>
+<li><p>For <span class="math inline">\(i=1,...,n\)</span>, obtain <span class="math inline">\(E[Y_i|A=a^*,M=m,C=C_i]\)</span>, <span class="math inline">\(E[Y_i|A=a,M=m,C=C_i]\)</span>, <span class="math inline">\(E[Y_i|A=a^*,M=M_{a^*,i},C=C_i]\)</span>, <span class="math inline">\(E[Y_i|A=a^*,M=M_{a,i},C=C_i]\)</span>, <span class="math inline">\(E[Y_i|A=a,M=M_{a^*,i},C=C_i]\)</span> and <span class="math inline">\(E[Y_i|A=a,M=M_{a,i},C=C_i]\)</span> from the
+regression model in step 1.</p></li>
+<li><p>Impute the counterfactuals <span class="math inline">\(E[Y_{a^*m}]\)</span>, <span class="math inline">\(E[Y_{am}]\)</span>, <span class="math inline">\(E[Y_{a^*Ma^*}]\)</span>, <span class="math inline">\(E[Y_{aMa}]\)</span>, <span class="math inline">\(E[Y_{aMa^*}]\)</span> and <span class="math inline">\(E[Y_{a^*Ma}]\)</span>.</p>
+<ul>
+<li>Impute <span class="math inline">\(E[Y_{a^*m}]\)</span> by taking an
+average of <span class="math inline">\(\{E[Y_i|A=a^*,M=m,C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{am}]\)</span> by taking an
+average of <span class="math inline">\(\{E[Y_i|A=a,M=m,C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{a^*Ma^*}]\)</span> by taking
+an average of <span class="math inline">\(\{E[Y_i|A=a^*,M=M_{a^*,i},C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{aMa}]\)</span> by taking an
+average of <span class="math inline">\(\{E[Y_i|A=a,M=M_{a,i},C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{aMa^*}]\)</span> by taking
+an average of <span class="math inline">\(\{E[Y_i|A=a,M=M_{a^*,i},C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{a^*Ma}]\)</span> by taking
+an average of <span class="math inline">\(\{E[Y_i|A=a^*,M=M_{a,i},C=C_i]\}_{i=1,...,n}\)</span>.</li>
+</ul></li>
+<li><p>Calculate causal effects with formulas in table 1 or table
+2.</p></li>
+</ol>
+</div>
+</div>
+<div id="the-weighting-based-approach" class="section level2">
+<h2>The Weighting-based Approach</h2>
+<p>With the weighting-based approach, <code>CMAverse</code> estimates
+causal effects through direct counterfactual imputation estimation by
+the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a regression model for the distribution of <span class="math inline">\(E(Y|A,M,C)\)</span>. This regression model is
+specified by the <code>yreg</code> argument.</p></li>
+<li><p>If <span class="math inline">\(C\)</span> is not empty, fit a
+regression model for <span class="math inline">\(P(A|C)\)</span> and
+obtain <span class="math inline">\(P(A=A_i|C=C_i)\)</span> for <span class="math inline">\(i=1,...,n\)</span>. This regression model is
+specified by the <code>ereg</code> argument.</p></li>
+<li><p>For <span class="math inline">\(i=1,...,n\)</span>, obtain <span class="math inline">\(E[Y_i|A=a^*,M=m,C=C_i]\)</span>, <span class="math inline">\(E[Y_i|A=a,M=m,C=C_i]\)</span>, <span class="math inline">\(E[Y_i|A=a^*,M=M_i,C=C_i]\)</span> and <span class="math inline">\(E[Y_i|A=a,M=M_i,C=C_i]\)</span> from the
+regression model in step 1.</p></li>
+<li><p>Impute the counterfactuals <span class="math inline">\(E[Y_{a^*m}]\)</span>, <span class="math inline">\(E[Y_{am}]\)</span>, <span class="math inline">\(E[Y_{a^*Ma^*}]\)</span>, <span class="math inline">\(E[Y_{aMa}]\)</span>, <span class="math inline">\(E[Y_{aMa^*}]\)</span> and <span class="math inline">\(E[Y_{a^*Ma}]\)</span>.</p>
+<ul>
+<li>Impute <span class="math inline">\(E[Y_{a^*m}]\)</span> by taking an
+average of <span class="math inline">\(\{E[Y_i|A=a^*,M=m,C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{am}]\)</span> by taking an
+average of <span class="math inline">\(\{E[Y_i|A=a,M=m,C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{a^*Ma^*}]\)</span> by taking
+a weighted average of <span class="math inline">\(\{Y_i\}_{i\in
+\{i:A_i=a^*\}}\)</span>, and each subject i is given a weight <span class="math inline">\(\frac{P(A=A_i)}{P(A=A_i|C=C_i)}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{aMa}]\)</span> by taking a
+weighted average of <span class="math inline">\(\{Y_i\}_{i\in
+\{i:A_i=a\}}\)</span>, and each subject i is given a weight <span class="math inline">\(\frac{P(A=A_i)}{P(A=A_i|C=C_i)}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{aMa^*}]\)</span> by taking a
+weighted average of <span class="math inline">\(\{E[Y_i|A=a,M=M_i,C=C_i]\}_{i\in
+\{i:A_i=a^*\}}\)</span>, and each subject i is given a weight <span class="math inline">\(\frac{P(A=A_i)}{P(A=A_i|C=C_i)}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{a^*Ma}]\)</span> by taking a
+weighted average of <span class="math inline">\(\{E[Y_i|A=a^*,M=M_i,C=C_i]\}_{i\in
+\{i:A_i=a\}}\)</span>, and each subject i is given a weight <span class="math inline">\(\frac{P(A=A_i)}{P(A=A_i|C=C_i)}\)</span>.</li>
+</ul></li>
+<li><p>Calculate causal effects with formulas in table 1 or table
+2.</p></li>
+</ol>
+</div>
+<div id="the-inverse-odds-ratio-weighting-approach" class="section level2">
+<h2>The Inverse Odds Ratio Weighting Approach</h2>
+<p>With the inverse odds ratio weighting approach, <code>CMAverse</code>
+estimates causal effects through direct counterfactual imputation
+estimation by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a regression model for <span class="math inline">\(P(A|M,C)\)</span> and obtain <span class="math inline">\(\frac{P(A=0|M=M_i,C=C_i)}{P(A=A_i|M=M_i,C=C_i)}\)</span>
+for <span class="math inline">\(i=1,...,n\)</span>. This regression
+model is specified by the <code>ereg</code> argument.</p></li>
+<li><p>Fit a regression model for <span class="math inline">\(E(Y|A,C)\)</span>. This regression model is
+specified by the <code>yreg</code> argument.</p></li>
+<li><p>Fit a weighted regression model for <span class="math inline">\(E(Y|A,C)\)</span> and each subject <span class="math inline">\(i\)</span> is given a weight <span class="math inline">\(\frac{P(A=0|M=M_i,C=C_i)}{P(A=A_i|M=M_i,C=C_i)}\)</span>.
+This regression model is obtained by adding the weights to the
+regression model in step 2.</p></li>
+<li><p>Impute the counterfactuals <span class="math inline">\(E_{tot}[Y_{a}]\)</span>, <span class="math inline">\(E_{tot}[Y_{a^*}]\)</span>, <span class="math inline">\(E_{dir}[Y_{a}]\)</span> and <span class="math inline">\(E_{dir}[Y_{a^*}]\)</span>.</p>
+<ul>
+<li>Impute <span class="math inline">\(E_{tot}[Y_{a}]\)</span> by taking
+an average of <span class="math inline">\(\{E[Y_i|A=a,C=C_i]\}_{i=1,...,n}\)</span> obtained
+from the regression model in step 2.</li>
+<li>Impute <span class="math inline">\(E_{tot}[Y_{a^*}]\)</span> by
+taking an average of <span class="math inline">\(\{E[Y_i|A=a^*,C=C_i]\}_{i=1,...,n}\)</span>
+obtained from the regression model in step 2.</li>
+<li>Impute <span class="math inline">\(E_{dir}[Y_{a}]\)</span> by taking
+a weighted average of <span class="math inline">\(\{E[Y_i|A=a,C=C_i]\}_{i=1,...,n}\)</span> obtained
+from the regression model in step 3 and each subject <span class="math inline">\(i\)</span> is given a weight <span class="math inline">\(\frac{P(A=0|M=M_i,C=C_i)}{P(A=A_i|M=M_i,C=C_i)}\)</span>.</li>
+<li>Impute <span class="math inline">\(E_{dir}[Y_{a^*}]\)</span> by
+taking a weighted average of <span class="math inline">\(\{E[Y_i|A=a^*,C=C_i]\}_{i=1,...,n}\)</span>
+obtained from the regression model in step 3 and each subject <span class="math inline">\(i\)</span> is given a weight <span class="math inline">\(\frac{P(A=0|M=M_i,C=C_i)}{P(A=A_i|M=M_i,C=C_i)}\)</span>.</li>
+</ul></li>
+<li><ul>
+<li>For a continuous outcome, calculate <span class="math inline">\(TE\)</span> by <span class="math inline">\(E_{tot}[Y_{a}]-E_{tot}[Y_{a^*}]\)</span>,
+calculate <span class="math inline">\(PNDE\)</span> by <span class="math inline">\(E_{dir}[Y_{a}]-E_{dir}[Y_{a^*}]\)</span> and
+calculate <span class="math inline">\(TNIE\)</span> by <span class="math inline">\(TE-PNDE\)</span>.</li>
+<li>For a categorical, count or survival outcome, calculate <span class="math inline">\(TE\)</span> by <span class="math inline">\(E_{tot}[Y_{a}]/E_{tot}[Y_{a^*}]\)</span>,
+calculate <span class="math inline">\(PNDE\)</span> by <span class="math inline">\(E_{dir}[Y_{a}]/E_{dir}[Y_{a^*}]\)</span> and
+calculate <span class="math inline">\(TNIE\)</span> by <span class="math inline">\(TE/PNDE\)</span>.</li>
+</ul></li>
+</ol>
+</div>
+<div id="the-natural-effect-model" class="section level2">
+<h2>The Natural Effect Model</h2>
+<p>With the natural effect model, <code>CMAverse</code> estimates causal
+effects through direct counterfactual imputation estimation by the
+following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>Fit a regression model for <span class="math inline">\(E(Y|A,M,C)\)</span>. This regression model is
+specified by the <code>yreg</code> argument.</p></li>
+<li><p>Expand the dataset using the regression model in step 1 and the
+<code>neImpute</code> function in the <code>medflex</code> package. The
+expanded dataset gives <span class="math inline">\(A0\)</span> for the
+direct effect and <span class="math inline">\(A1\)</span> for the
+indirect effect.</p></li>
+<li><p>Fit the regression model in step 1 by the expanded dataset in
+step 2 with the exposure in the regression formula replaced by <span class="math inline">\(A0\)</span> and mediators in the regression
+formula replaced by <span class="math inline">\(A1\)</span>, i.e., <span class="math inline">\(Y\sim A0+A1+A0*A1+C\)</span> if the regression
+formula in step 1 is <span class="math inline">\(Y\sim
+A+M_1+M_2+A*M_1+C\)</span>.</p></li>
+<li><p>For <span class="math inline">\(i=1,...,n\)</span>, obtain <span class="math inline">\(E[Y_i|A=a^*,M=m,C=C_i]\)</span> and <span class="math inline">\(E[Y_i|A=a,M=m,C=C_i]\)</span> from the regression
+model in step 1; obtain <span class="math inline">\(E[Y_i|A0=a^*,A1=a^*,C=C_i]\)</span>, <span class="math inline">\(E[Y_i|A0=a^*,A1=a,C=C_i]\)</span>, <span class="math inline">\(E[Y_i|A0=a,A1=a^*,C=C_i]\)</span> and <span class="math inline">\(E[Y_i|A0=a,A1=a,C=C_i]\)</span> from the
+regression model in step 3.</p></li>
+<li><p>Impute the counterfactuals <span class="math inline">\(E[Y_{a^*m}]\)</span>, <span class="math inline">\(E[Y_{am}]\)</span>, <span class="math inline">\(E[Y_{a^*Ma^*}]\)</span>, <span class="math inline">\(E[Y_{aMa}]\)</span>, <span class="math inline">\(E[Y_{aMa^*}]\)</span> and <span class="math inline">\(E[Y_{a^*Ma}]\)</span>.</p>
+<ul>
+<li>Impute <span class="math inline">\(E[Y_{a^*m}]\)</span> by taking an
+average of <span class="math inline">\(\{E[Y_i|A=a^*,M=m,C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{am}]\)</span> by taking an
+average of <span class="math inline">\(\{E[Y_i|A=a,M=m,C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{a^*Ma^*}]\)</span> by taking
+an average of <span class="math inline">\(\{E[Y_i|A0=a^*,A1=a^*,C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{aMa}]\)</span> by taking an
+average of <span class="math inline">\(\{E[Y_i|A0=a,A1=a,C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{aMa^*}]\)</span> by taking
+an average of <span class="math inline">\(\{E[Y_i|A0=a,A1=a^*,C=C_i]\}_{i=1,...,n}\)</span>.</li>
+<li>Impute <span class="math inline">\(E[Y_{a^*Ma}]\)</span> by taking
+an average of <span class="math inline">\(\{E[Y_i|A0=a^*,A1=a,C=C_i]\}_{i=1,...,n}\)</span>.</li>
+</ul></li>
+<li><p>Calculate causal effects with formulas in table 1 or table
+2.</p></li>
+</ol>
+</div>
+</div>
+<div id="confounders-affected-by-the-exposure" class="section level1">
+<h1>Confounders Affected by the exposure</h1>
+<div id="dag-1" class="section level2">
+<h2>DAG</h2>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+<div id="estimands-1" class="section level2">
+<h2>Estimands</h2>
+<p>For a continuous outcome, causal effects are estimated on the
+difference scale (summarized in table 3). For a categorical, count, or
+survival outcome, causal effects are estimated on the ratio scale
+(summarized in table 4). Because of the existence of <span class="math inline">\(L\)</span>, some causal effects in table 1 and
+table 2 are not identifiable. However, their randomized analogues are
+still identifiable. See <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4214081/">VanderWeele
+et al. (2014)</a> for details about randomized analogues of causal
+effects.</p>
+<table style="NAborder-bottom: 0; margin-left: auto; margin-right: auto;" class="table table-bordered table-striped table-hover table-responsive table-condensed">
+<caption>
+Table 3: Causal Effects on the Difference Scale
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Full Name
+</th>
+<th style="text-align:left;">
+Abbreviation
+</th>
+<th style="text-align:left;">
+Formula
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Controlled Direct Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(CDE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{am}-Y_{a^*m}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(PNDE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rPNDE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aG_{a^*}}-Y_{a^*G_{a^*}}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(TNDE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rTNDE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aG_{a}}-Y_{a^*G_{a}}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(PNIE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rPNIE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{a^*G_{a}}-Y_{a^*G_{a^*}}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(TNIE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rTNIE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aG_{a}}-Y_{aG_{a^*}}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Total Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(TE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rPNDE+rTNIE\)</span> or <span class="math inline">\(rTNDE+rPNIE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(INT_{ref}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rINT_{ref}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rPNDE-CDE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(INT_{med}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rINT_{med}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rTNIE-rPNIE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(CDE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{CDE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(CDE/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(rINT_{ref}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{rINT_{ref}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rINT_{ref}/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(rINT_{med}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{rINT_{med}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rINT_{med}/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(rPNIE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{rPNIE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rPNIE/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(PM\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rPM\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rTNIE/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(INT\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rINT\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((rINT_{ref}+rINT_{med})/TE\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(PE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rPE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((rINT_{ref}+rINT_{med}+rPNIE)/TE\)</span>
+</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<span style="font-style: italic;">Note: </span>
+</td>
+</tr>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<sup></sup> <span class="math inline">\(a\)</span> and <span class="math inline">\(a^*\)</span> are the active and control values for
+<span class="math inline">\(A\)</span>. <span class="math inline">\(m\)</span> is the value at which <span class="math inline">\(M\)</span> is controlled. <span class="math inline">\(G_{a}\)</span> denotes a random draw from the
+distribution of <span class="math inline">\(M\)</span> had <span class="math inline">\(A=a\)</span>. <span class="math inline">\(Y_{am}\)</span> denotes the counterfactual value
+of <span class="math inline">\(Y\)</span> that would have been observed
+had <span class="math inline">\(A\)</span> been set to be <span class="math inline">\(a\)</span>, and <span class="math inline">\(M\)</span> to be <span class="math inline">\(m\)</span>. <span class="math inline">\(Y_{aG_{a*}}\)</span> denotes the counterfactual
+value of <span class="math inline">\(Y\)</span> that would have been
+observed had <span class="math inline">\(A\)</span> been set to be <span class="math inline">\(a\)</span>, and <span class="math inline">\(M\)</span> to be the counterfactual value <span class="math inline">\(G_{a*}\)</span>.
+</td>
+</tr>
+</tfoot>
+</table>
+<table style="NAborder-bottom: 0; margin-left: auto; margin-right: auto;" class="table table-bordered table-striped table-hover table-responsive">
+<caption>
+Table 4: Causal Effects on the Ratio Scale
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Full Name
+</th>
+<th style="text-align:left;">
+Abbreviation
+</th>
+<th style="text-align:left;">
+Formula
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Controlled Direct Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(R^{CDE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{am}]/E[Y_{a^*m}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(PNDE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rR^{PNDE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aG_{a^*}}]/E[Y_{a^*G_{a^*}}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(TNDE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rR^{TNDE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aG_{a}}]/E[Y_{a^*G_{a}}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(PNIE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rR^{PNIE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{a^*G_{a}}]/E[Y_{a^*G_{a^*}}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(TNIE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rR^{TNIE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(E[Y_{aG_{a}}]/E[Y_{aG_{a^*}}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Total Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(R^{TE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rR^{PNDE}\times rR^{TNIE}\)</span> or <span class="math inline">\(rR^{TNDE}\times rR^{PNIE}\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Excess Ratio due to Controlled Direct Effect
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(ER^{CDE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((E[Y_{am}-Y_{a^*m}])/E[Y_{a^*M_a^*}]\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(ER^{INT_{ref}}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rER^{INT_{ref}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rR^{PNDE}-1-ER^{CDE}\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(ER^{INT_{med}}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rER^{INT_{med}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rR^{TNIE}*rR^{PNDE}-rR^{PNDE}-rR^{PNIE}+1\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(ER^{PNIE}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rER^{PNIE}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rR^{PNIE}-1\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(ER^{CDE}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{ER^{CDE}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(ER^{CDE}/(rR^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(rER^{INT_{ref}}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{rER^{INT_{ref}}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rER^{INT_{ref}}/(R^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(rER^{INT_{med}}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{rER^{INT_{med}}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rER^{INT_{med}}/(R^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Proportion <span class="math inline">\(rER^{PNIE}\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(prop^{rER^{PNIE}}\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\(rER^{PNIE}/(R^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(PM\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rPM\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((rR^{PNDE}*(rR^{TNIE}-1))/(R^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(INT\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rINT\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((rER^{INT_{ref}}+rER^{INT_{med}})/(R^{TE}-1)\)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 20em; ">
+Randomized Analogue of <span class="math inline">\(PE\)</span>
+</td>
+<td style="text-align:left;width: 8em; ">
+<span class="math inline">\(rPE\)</span>
+</td>
+<td style="text-align:left;width: 10em; ">
+<span class="math inline">\((rER^{INT_{ref}}+rER^{INT_{med}}+rER^{PNIE})/(R^{TE}-1)\)</span>
+</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<span style="font-style: italic;">Note: </span>
+</td>
+</tr>
+<tr>
+<td style="padding: 0; " colspan="100%">
+<sup></sup> <span class="math inline">\(a\)</span> and <span class="math inline">\(a^*\)</span> are the active and control values for
+<span class="math inline">\(A\)</span>. <span class="math inline">\(m\)</span> is the value at which <span class="math inline">\(M\)</span> is controlled. <span class="math inline">\(G_{a}\)</span> denotes a random draw from the
+distribution of <span class="math inline">\(M\)</span> among those with
+<span class="math inline">\(A=a\)</span>. <span class="math inline">\(Y_{am}\)</span> denotes the counterfactual value
+of <span class="math inline">\(Y\)</span> that would have been observed
+had <span class="math inline">\(A\)</span> been set to be <span class="math inline">\(a\)</span>, and <span class="math inline">\(M\)</span> to be <span class="math inline">\(m\)</span>. <span class="math inline">\(Y_{aG_{a*}}\)</span> denotes the counterfactual
+value of <span class="math inline">\(Y\)</span> that would have been
+observed had <span class="math inline">\(A\)</span> been set to be <span class="math inline">\(a\)</span>, and <span class="math inline">\(M\)</span> to be the counterfactual value <span class="math inline">\(G_{a*}\)</span>. If <span class="math inline">\(Y\)</span> is categorical, <span class="math inline">\(E[Y]\)</span> represents the probability of <span class="math inline">\(Y=y\)</span> where <span class="math inline">\(y\)</span> is a pre-specified value of <span class="math inline">\(Y\)</span>.
+</td>
+</tr>
+</tfoot>
+</table>
+</div>
+<div id="the-marginal-structural-model" class="section level2">
+<h2>The Marginal Structural Model</h2>
+<p>With the marginal structural model, <code>CMAverse</code> estimates
+causal effects through direct counterfactual imputation estimation by
+the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>For <span class="math inline">\(p=1,...,k\)</span>, fit the
+regression model specified by <code>wmnomreg[p]</code> for <span class="math inline">\(P(M_p|A,M_1, ...,M_{p-1})\)</span> and obtain
+<span class="math inline">\(P(M_p=M_{p,i}|A=A_i,M_1=M_{1,i},...,M_{p-1}=M_{p-1,i})\)</span>
+for <span class="math inline">\(i=1,...,n\)</span>.</p></li>
+<li><p>For <span class="math inline">\(p=1,...,k\)</span>, fit the
+regression model specified by <code>wmdenomreg[p]</code> for <span class="math inline">\(P(M_p|A,M_1, ...,M_{p-1},L,C)\)</span> and obtain
+<span class="math inline">\(P(M_p=M_{p,i}|A=A_i,M_1=M_{1,i},...,M_{p-1}=M_{p-1,i},L=L_i,C=C_i)\)</span>
+for <span class="math inline">\(i=1,...,n\)</span>.</p></li>
+<li><p>If <span class="math inline">\(C\)</span> is not empty, fit the
+regression model specified by <code>ereg</code> for <span class="math inline">\(P(A|C)\)</span> and obtain <span class="math inline">\(P(A=A_i|C=C_i)\)</span> for <span class="math inline">\(i=1,...,n\)</span>.</p></li>
+<li><p>Add weights to the regression model specified by
+<code>yreg</code> for <span class="math inline">\(E(Y|A,M)\)</span> and
+each subject <span class="math inline">\(i,i=1,...,n\)</span> is given a
+weight <span class="math inline">\(\frac{P(A=A_i)}{P(A=A_i|C=C_i)}\frac{P(M_1=M_{1,i}|A=A_i)}{P(M_1=M_{1,i}|A=A_i,C=C_i,L=L_i)}...\frac{P(M_k=M_{k,i}|A=A_i,M_1=M_{1,i},...,M_{k-1}=M_{k-1,i})}{P(M_k=M_{k,i}|A=A_i,M_1=M_{1,i},...,M_{k-1}=M_{k-1,i},C=C_i,L=L_i)}\)</span>.</p></li>
+<li><p>For <span class="math inline">\(p=1,...,k\)</span>, add weights
+to the regression model specified by <code>mreg[p]</code> for the
+distribution of <span class="math inline">\(M_p\)</span> given <span class="math inline">\(A\)</span> and each subject <span class="math inline">\(i,i=1,...,n\)</span> is given a weight <span class="math inline">\(\frac{P(A=A_i)}{P(A=A_i|C=C_i)}\)</span>.</p></li>
+<li><p>For <span class="math inline">\(p=1,...,k\)</span> and <span class="math inline">\(i=1,...,n\)</span>, simulate the counterfactuals
+<span class="math inline">\(M_{a,p,i}\)</span> and <span class="math inline">\(M_{a^*,p,i}\)</span> from the regression models in
+step 5.</p>
+<ul>
+<li>Simulate <span class="math inline">\(M_{a,p,i}\)</span> by randomly
+drawing a value from the distribution of <span class="math inline">\(M_{p}\)</span> given <span class="math inline">\(A=a\)</span>. Denote <span class="math inline">\(M_{a,i}=(M_{a,1,i},...,M_{a,k,i})^T\)</span>.</li>
+<li>Simulate <span class="math inline">\(M_{a^*,p,i}\)</span> by
+randomly drawing a value from the distribution of <span class="math inline">\(M_{p}\)</span> given <span class="math inline">\(A=a^*\)</span>. Denote <span class="math inline">\(M_{a^*,i}=(M_{a^*,1,i},...,M_{a^*,k,i})^T\)</span>.</li>
+</ul></li>
+<li><p>For <span class="math inline">\(i=1,...,n\)</span>, obtain <span class="math inline">\(E[Y_i|A=a^*,M=m]\)</span>, <span class="math inline">\(E[Y_i|A=a,M=m]\)</span>, <span class="math inline">\(E[Y_i|A=a^*,M=M_{a^*,i}]\)</span>, <span class="math inline">\(E[Y_i|A=a^*,M=M_{a,i}]\)</span>, <span class="math inline">\(E[Y_i|A=a,M=M_{a^*,i}]\)</span> and <span class="math inline">\(E[Y_i|A=a,M=M_{a,i}]\)</span> from the regression
+model in step 4.</p></li>
+<li><p>Impute the counterfactuals <span class="math inline">\(E[Y_{a^*m}]\)</span>, <span class="math inline">\(E[Y_{am}]\)</span>, <span class="math inline">\(E[Y_{a^*Ga^*}]\)</span>, <span class="math inline">\(E[Y_{aGa}]\)</span>, <span class="math inline">\(E[Y_{aGa^*}]\)</span> and <span class="math inline">\(E[Y_{a^*Ga}]\)</span>.</p>
+<ul>
+<li>Impute <span class="math inline">\(E[Y_{a^*m}]\)</span> by taking a
+weighted average of <span class="math inline">\(\{E[Y_i|A=a^*,M=m]\}_{i=1,...,n}\)</span>;</li>
+<li>Impute <span class="math inline">\(E[Y_{am}]\)</span> by taking a
+weighted average of <span class="math inline">\(\{E[Y_i|A=a,M=m]\}_{i=1,...,n}\)</span>;</li>
+<li>Impute <span class="math inline">\(E[Y_{a^*Ga^*}]\)</span> by taking
+a weighted average of <span class="math inline">\(\{E[Y_i|A=a^*,M=M_{a^*,i}]\}_{i=1,...,n}\)</span>;</li>
+<li>Impute <span class="math inline">\(E[Y_{aGa}]\)</span> by taking a
+weighted average of <span class="math inline">\(\{E[Y_i|A=a,M=M_{a,i}]\}_{i=1,...,n}\)</span>;</li>
+<li>Impute <span class="math inline">\(E[Y_{aGa^*}]\)</span> by taking a
+weighted average of <span class="math inline">\(\{E[Y_i|A=a,M=M_{a^*,i}]\}_{i=1,...,n}\)</span>;</li>
+<li>Impute <span class="math inline">\(E[Y_{a^*Ga}]\)</span> by taking a
+weighted average of <span class="math inline">\(\{E[Y_i|A=a^*,M=M_{a,i}]\}_{i=1,...,n}\)</span>,</li>
+</ul>
+<p>each subject <span class="math inline">\(i,i=1,...,n\)</span> is
+given a weight <span class="math inline">\(\frac{P(A=A_i)}{P(A=A_i|C=C_i)}\frac{P(M_1=M_{1,i}|A=A_i)}{P(M_1=M_{1,i}|A=A_i,C=C_i,L=L_i)}...\frac{P(M_k=M_{k,i}|A=A_i,M_1=M_{1,i},...,M_{k-1}=M_{k-1,i})}{P(M_k=M_{k,i}|A=A_i,M_1=M_{1,i},...,M_{k-1}=M_{k-1,i},C=C_i,L=L_i)}\)</span>.</p></li>
+<li><p>Calculate causal effects with formulas in table 3 or table
+4.</p></li>
+</ol>
+</div>
+<div id="the-g-formula-approach" class="section level2">
+<h2>The g-formula Approach</h2>
+<p>With the <span class="math inline">\(g\)</span>-formula approach,
+<code>CMAverse</code> estimates causal effects through direct
+counterfactual imputation estimation by the following steps:</p>
+<ol style="list-style-type: decimal">
+<li><p>For <span class="math inline">\(q=1,...,s\)</span>, fit the
+regression model specified by <code>postcreg[q]</code> for the
+distribution of <span class="math inline">\(L_q\)</span> given <span class="math inline">\(A\)</span> and <span class="math inline">\(C\)</span>.</p></li>
+<li><p>For <span class="math inline">\(q=1,...,s\)</span> and <span class="math inline">\(i=1,...,n\)</span>, simulate the counterfactuals
+<span class="math inline">\(L_{a,q,i}\)</span> and <span class="math inline">\(L_{a^*,q,i}\)</span> from the regression models in
+step 1.</p>
+<ul>
+<li>Simulate <span class="math inline">\(L_{a,q,i}\)</span> by randomly
+drawing a value from the distribution of <span class="math inline">\(L_{q}\)</span> given <span class="math inline">\(A=a,C=C_i\)</span>. Denote <span class="math inline">\(L_{a,i}=(L_{a,1,i},...,L_{a,s,i})^T\)</span>.</li>
+<li>Simulate <span class="math inline">\(L_{a^*,q,i}\)</span> by
+randomly drawing a value from the distribution of <span class="math inline">\(L_{q}\)</span> given <span class="math inline">\(A=a^*,C=C_i\)</span>. Denote <span class="math inline">\(L_{a^*,i}=(L_{a^*,1,i},...,L_{a^*,s,i})^T\)</span>.</li>
+</ul></li>
+<li><p>For <span class="math inline">\(p=1,...,k\)</span>, fit the
+regression model specified by <code>mreg[p]</code> for the distribution
+of <span class="math inline">\(M_p\)</span> given <span class="math inline">\(A\)</span>, <span class="math inline">\(L\)</span>
+and <span class="math inline">\(C\)</span>.</p></li>
+<li><p>For <span class="math inline">\(p=1,...,k\)</span> and <span class="math inline">\(i=1,...,n\)</span>, simulate the counterfactuals
+<span class="math inline">\(M_{a,p,i}\)</span> and <span class="math inline">\(M_{a^*,p,i}\)</span> from the regression models in
+step 3.</p>
+<ul>
+<li>Simulate <span class="math inline">\(M_{a,p,i}\)</span> by randomly
+drawing a value from the distribution of <span class="math inline">\(M_{p}\)</span> given <span class="math inline">\(A=a,L=L_{a,i},C=C_i\)</span>. Denote <span class="math inline">\(M_{a,i}=(M_{a,1,i},...,M_{a,k,i})^T\)</span>.</li>
+<li>Simulate <span class="math inline">\(M_{a^*,p,i}\)</span> by
+randomly drawing a value from the distribution of <span class="math inline">\(M_{p}\)</span> given <span class="math inline">\(A=a^*,L=L_{a^*,i},C=C_i\)</span>. Denote <span class="math inline">\(M_{a^*,i}=(M_{a^*,1,i},...,M_{a^*,k,i})^T\)</span>.</li>
+</ul></li>
+<li><p>Obtain <span class="math inline">\(\{G_{a,i}\}_{i=1,...,n}\)</span> by randomly
+permuting <span class="math inline">\(\{M_{a,i}\}_{i=1,...,n}\)</span>
+and obtain <span class="math inline">\(\{G_{a^*,i}\}_{i=1,...,n}\)</span> by randomly
+permuting <span class="math inline">\(\{M_{a^*,i}\}_{i=1,...,n}\)</span>.</p></li>
+<li><p>Fit the regression model specified by <code>yreg</code> for <span class="math inline">\(E(Y|A,M,L,C)\)</span>.</p></li>
+<li><p>For <span class="math inline">\(i=1,...,n\)</span>, obtain <span class="math inline">\(E[Y_i|A=a^*,M=m,L=L_{a^*,i},C=C_i]\)</span>, <span class="math inline">\(E[Y_i|A=a,M=m,L=L_{a,i},C=C_i]\)</span>, <span class="math inline">\(E[Y_i|A=a^*,M=G_{a^*,i},L=L_{a^*,i},C=C_i]\)</span>,
+<span class="math inline">\(E[Y_i|A=a^*,M=G_{a,i},L=L_{a^*,i},C=C_i]\)</span>,
+<span class="math inline">\(E[Y_i|A=a,M=G_{a^*,i},L=L_{a,i},C=C_i]\)</span>
+and <span class="math inline">\(E[Y_i|A=a,M=G_{a,i},L=L_{a,i},C=C_i]\)</span> from
+the regression model in step 5.</p></li>
+<li><p>Impute the counterfactuals <span class="math inline">\(E[Y_{a^*m}]\)</span>, <span class="math inline">\(E[Y_{am}]\)</span>, <span class="math inline">\(E[Y_{a^*Ga^*}]\)</span>, <span class="math inline">\(E[Y_{aGa}]\)</span>, <span class="math inline">\(E[Y_{aGa^*}]\)</span> and <span class="math inline">\(E[Y_{a^*Ga}]\)</span>.</p>
+<ul>
+<li>Impute <span class="math inline">\(E[Y_{a^*m}]\)</span> by taking an
+average of <span class="math inline">\(\{E[Y_i|A=a^*,M=m,L=L_{a^*,i},C=C_i]\}_{i=1,...,n}\)</span>;</li>
+<li>Impute <span class="math inline">\(E[Y_{am}]\)</span> by taking an
+average of <span class="math inline">\(\{E[Y_i|A=a,M=m,L=L_{a,i},C=C_i]\}_{i=1,...,n}\)</span>;</li>
+<li>Impute <span class="math inline">\(E[Y_{a^*Ga^*}]\)</span> by taking
+an average of <span class="math inline">\(\{E[Y_i|A=a^*,M=G_{a^*,i},L=L_{a^*,i},C=C_i]\}_{i=1,...,n}\)</span>;</li>
+<li>Impute <span class="math inline">\(E[Y_{aGa}]\)</span> by taking an
+average of <span class="math inline">\(\{E[Y_i|A=a,M=G_{a,i},L=L_{a,i},C=C_i]\}_{i=1,...,n}\)</span>;</li>
+<li>Impute <span class="math inline">\(E[Y_{aGa^*}]\)</span> by taking
+an average of <span class="math inline">\(\{E[Y_i|A=a,M=G_{a^*,i},L=L_{a,i},C=C_i]\}_{i=1,...,n}\)</span>;</li>
+<li>Impute <span class="math inline">\(E[Y_{a^*Ga}]\)</span> by taking
+an average of <span class="math inline">\(\{E[Y_i|A=a^*,M=G_{a,i},L=L_{a^*,i},C=C_i]\}_{i=1,...,n}\)</span>,</li>
+</ul></li>
+<li><p>Calculate causal effects with formulas in table 3 or table
+4.</p></li>
+</ol>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
