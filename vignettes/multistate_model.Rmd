@@ -1,11 +1,14 @@
 ---
-title: "Multistate modeling with a time-to-event mediator and a time-to-event outcome"
+title: "Multistate approach for stochastic interventions on a time-to event mediator in the presence of competing risks"
 output: rmarkdown::html_vignette
 date: "`r Sys.Date()`"
 vignette: >
-  %\VignetteIndexEntry{Multistate modeling with a time-to-event mediator and a time-to-event outcome}
+  %\VignetteIndexEntry{Multistate approach for stochastic interventions on a time-to event mediator in the presence of competing risks}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
@@ -19,16 +22,20 @@ library(CMAverse)
 
 ## Introduction
 
-This example demonstrates how to use `cmest` when there is a
-time-to-event mediator and a time-to-event outcome. For this purpose, we
-simulate a dataset with a binary exposure $A$, a time-to-event mediator
-$M$, a time-to-event outcome $S$, and two baseline covariates: one
-continuous ($C1$), and one binary ($C2$).
+Valeri et al. (2023) propose a novel methodology that leverages a
+multistate joint modeling approach to quantify the effect of stochastic
+interventions for a nonterminal intermediate time-to-event on a terminal
+time-to-event outcome. The approach is here illustrated in a health
+disparities context where interest lies in understanding the impact of a
+stochastic intervention on a mediator in reducing health disparities and
+in improving survival outcomes in a particular subgroup of the
+population.
 
-The Residual Disparity (RD) is defined as the difference in the
-probability of surviving beyond time point s between the exposed group
-(A=1) and the unexposed group (A=0), had the mediator distribution g
-been the fixed to that of the unexposed group:
+The following causal estimands have been introduced. The Residual
+Disparity (RD) is defined as the difference in the probability of
+surviving beyond time point s between the exposed group (A=1) and the
+unexposed group (A=0), had the mediator distribution g been the fixed to
+that of the unexposed group:
 $$RD=P(S_{g_0}>s|A=1,C1,C2) - P(S_{g_0}>s|A=0,C1,C2)$$
 
 The Shifting Distribution Effect (SD) is defined as the difference in
@@ -38,11 +45,14 @@ group:
 
 $$SD=P(S_{g_1}>s|A=1,C1,C2) - P(S_{g_0}>s|A=1,C1,C2)$$
 
-Consequently, we define the Total Effect (TE) as the difference in the
+Consequently, the Total Effect (TE) is defined as the difference in the
 probability of surviving beyond time s between the exposed and the
 unexposed group, without intervening on the time-to-mediator
 distribution. As a result, TE is equal to the sum of RD and SD:
 $$TE = RD+SDE = P(S>s|A=1,C1, C2) - P(S>s|A=0,C1, C2)$$
+
+Identification assumptions for these causal estimands is discussed in
+Valeri et al. (2023).
 
 The DAG for this scientific setting is as follows:
 
@@ -51,12 +61,16 @@ cmdag(outcome = "S", exposure = "A", mediator = "M",
       basec = c("C1", "C2"), postc = NULL, node = TRUE, text_col = "white")
 ```
 
+An example is given to demonstrate how to use `cmest` when there is a
+time-to-event mediator and a time-to-event outcome, and the estimation
+of RD and SD is of interest. For this purpose, we simulate a dataset
+with a binary exposure A, a time-to-event mediator M, a timeto-event
+outcome S, and two baseline covariates: one continuous (C1), and one
+binary (C2).
+
 ## Data simulation
 
-In this setting, we can use a multistate modeling approach to compute
-the causal estimands of interest (RD, SD, and TE) in the presence of
-semi-competing risks. We demonstrate how to achieve this using `cmest`.
-First, we simulate data following the structure shown in the above DAG.
+We simulate data following the structure shown in the above DAG.
 Specifically, we separately generate the following transitions under a
 Cox proportional hazards model with the constant baseline hazard, i.e.,
 assuming exponential time to event:
@@ -72,37 +86,36 @@ The code for generating the aforementioned data is as follows:
 
 ```{r data generation}
 # set up coefficients 
-# M (trans 1)
+# transition 1 (A to M)
 a1 = -1.9 
 a2 = 0.2 
 a3 = 0.5 
 
-# S (trans 2)
+# transition 2 (A to S)
 b1 = 1 
 b3 = -0.5
 b4 = 0.3
 
-# M when generating the semi-competing observations in resample() (trans 3)
-# S (resample) (trans 3)
+# transition 3 (M to S)
 c1 = 0.55
 c2 = -0.15 
 c3 = -0.1 
 c4 = -0.2 
 
-#generate dataset
-set.seed(8) # 1, 8
-#build a function to generate time-to-event data
+set.seed(8) 
+
+# build a function to generate time-to-event data
 gen_srv <- function(n, lambda, beta, X){
   X = as.matrix(X)
   beta = as.matrix(beta, ncol=1)
-  time = -log(runif(n)) / (lambda * exp(X %*% beta)) # exponential distribution
+  time = -log(runif(n)) / (lambda * exp(X %*% beta)) 
   return(time)
 }
 
-n <- 2000 #1000
+n <- 2000 
 A = sample(c(0,1),replace=TRUE, size=n, c(0.5,0.5)) #binary exposure
-C1 = sample(c(0,1),replace=TRUE, size=n,c(0.6, 0.4)) #binary confounder
-C2 = rnorm(n, mean = 1, sd = 1) #continuous confounder
+C1 = sample(c(0,1),replace=TRUE, size=n,c(0.6, 0.4)) #binary baseline covariate
+C2 = rnorm(n, mean = 1, sd = 1) #continuous baseline covariate
 id=c(1:n)
 full = data.frame(id,A,C1,C2)
 M = gen_srv(n=n, lambda = 1.5, beta = c(a1,a2,a3), X=data.frame(A,C1,C2)) #time to event mediator
@@ -112,13 +125,12 @@ data = data.frame(id = c(1:n), M = M, S = S)
 data$ind_M = ifelse(data$M <= data$S, 1, 0)
 data$ind_S = 1
 data <- merge(data,full , by = "id")
-#modify Y distribution
+# modify S distribution
 trans_matrix = transMat(x = list(c(2, 3), c(3), c()), names = c("A", "M", "S"))
 covs = c("A","M", "C1","C2")
 pre_data = msprep(time = c(NA, "M", "S"), status = c(NA, "ind_M", "ind_S"),
                          data = data, trans = trans_matrix, keep = covs)
 pre_data = expand.covs(pre_data, covs, append = TRUE, longnames = FALSE)
-#pre_data$A_M.3 = pre_data$A.3*pre_data$M.3
 # resample for T < S
 data_23 = pre_data[which(pre_data$trans == 3),]
 data_23_tem = data.frame(id = rep(NA,dim(data_23)[1]),
@@ -141,15 +153,15 @@ for(i in 1:dim(data_23)[1]){
   data_23_tem$new_y[i] = time_test
 }
 data_temp = merge(data, data_23_tem, by = "id", all = T)
-# modify Y and M
+# modify M and S
 data_temp$S[which(data_temp$ind_M == 1)] = data_temp$new_y[which(data_temp$ind_M == 1)]
 data_temp$M[which(data_temp$ind_M == 0)] = data_temp$S[which(data_temp$ind_M == 0)]
 data_final = data_temp
-data_final$A = as.factor(data_final$A) #generate a factor exposure
+data_final$A = as.factor(data_final$A) 
 
 sc_data = data_final %>% dplyr::select(id,A,M,S,ind_M,ind_S,C1,C2)
 
-# generate time to censoring C; compare C to S; update event indicator
+# generate time to censoring and update event indicator
 time_to_censor = runif(n, 0, 2*max(sc_data$S))
 sc_data$ind_S = ifelse(sc_data$S > time_to_censor, 0, 1)
 sc_data$A = factor(sc_data$A)
@@ -162,13 +174,12 @@ data. We can see that the regression coefficient estimates are close to
 the set-up values, which is expected:
 
 ```{r check coefficient values}
-# fit mstate model on sc_data
-## prepare sc_data into mstate
+## prepare the simulated data into counting process format
 mstate_sc_data = msprep(time = c(NA, "M", "S"), status = c(NA, "ind_M", "ind_S"),
                          data = sc_data, trans = trans_matrix, keep = covs)
 mstate_sc_data = expand.covs(mstate_sc_data, covs, append = TRUE, longnames = FALSE)
 
-## fit mstate model
+## fit mstate model to the simulated data
 sc_joint_mod = coxph(Surv(Tstart, Tstop, status) ~ A.1 + A.2 + A.3 +
                          M.3 + C1.1 + C1.2 + C1.3 + C2.1 + C2.2 + C2.3 + strata(trans),
                       data = mstate_sc_data)
@@ -179,7 +190,7 @@ Below, we visualize the time-to-mediator and the time-to-event
 distributions by exposure group for all subjects with $C1=1$:
 
 ```{r Take a look at the simulated data}
-# overlayed histogram of mediator and outcome
+# overlayed histogram of time to mediator and outcome distributions
 hist_sc <- data.frame(value = c(sc_data$M, sc_data$S),
                  group = c(rep("M", length(sc_data$M)),
                            rep("S", length(sc_data$S))))
@@ -190,7 +201,7 @@ ggplot(hist_sc, aes(x = value, fill = group)) +
        y = "Frequency") +
   scale_fill_manual(values = c("blue", "red"))
 
-# survival curve by treatment group (A=1 vs. A=0) within strata C=1
+# survival curve by treatment group (A=1 vs. A=0) within strata C1=1
 survival_fit_sc <- survfit(Surv(S, ind_S) ~ A, data = sc_data %>% filter(C1==1))
 ggsurvplot(survival_fit_sc, data = sc_data, pval = T)
 ggsurvplot(survfit(Surv(M, ind_M) ~ A, data = sc_data %>% filter(C1==1)), data = sc_data, pval = T)
@@ -198,11 +209,15 @@ ggsurvplot(survfit(Surv(M, ind_M) ~ A, data = sc_data %>% filter(C1==1)), data =
 
 ## Demonstration
 
-Next, we show how to use the `cmest` function to calculate RD and SD for
+In this setting, we can use a multistate modeling approach to compute
+the causal estimands of interest (RD, SD, and TE) in the presence of
+semi-competing risks. We demonstrate how to achieve this using `cmest`.
+In this example, we use the `cmest` function to calculate RD and SD for
 time points 0.1, 0.5, 1, 2, 3, 4, 5, 6. For demonstration purposes, we
 only run 2 bootstraps here. More number of bootstraps are required in
-real-world settings (usually \>1000), resulting in long computation
-time.
+real-world settings (usually \>1000). Note this may result in longer
+computation time. We have implemented parallel computing to speed-up
+processing time.
 
 ```{r run multistate method on sc_data, results='hide'}
 # specificy time points (s)
@@ -244,7 +259,6 @@ theoretical/true RD and SD for the simulated data based on Valeri et al.
 (2023):
 
 ```{r function to compute theoretical RD and SD}
-# theoretical RD and SD for binary exposure
 get_theo_RD_SD = function(s=1, C1=1, C2=1,
                           a_vec=c(a1, a2, a3),
                           b_vec=c(b1, b3, b4),
@@ -289,9 +303,6 @@ get_theo_RD_SD = function(s=1, C1=1, C2=1,
   theoretical_SD = (SD_1 + SD_2$value) - (P_g_00 + P_g_01$value)
 
   return(c(RD = theoretical_RD, SD = theoretical_SD))
-  #return(c(RD = theoretical_RD, SD = theoretical_SD,
-  #         P_00 = P_00, P_01 = P_01$value, P_g_00 = P_g_00, P_g_01 = P_g_01$value, 
-  #         SD_1 = SD_1, SD_2 = SD_2$value))
 }
 
 theo_list = list()
@@ -305,7 +316,7 @@ for (i in 1:length(time_to_predict_sc)){
 
 theo_mat = round(do.call(rbind, theo_list), 5)
 rownames(theo_mat) = time_to_predict_sc
-theo_mat
+theo_mat # matrix that contains theoretical RD and SD for the specified time points
 ```
 
 Below is a plot that overlays the theoretical values of RD and SD
@@ -336,6 +347,27 @@ combined_comp_plot = ggplot(result_comp, aes(x = s, y = value, group=metric, col
 combined_comp_plot
 
 ```
+
+The plot shows that, on the time points specified, the RD, SD, and TE
+estimated by the multistate `cmest` command have values similar to their
+corresponding theoretical values. We here provide an interpretation of
+the results for this simulated dataset:
+
+-   TE=x can be interpreted as: The probability of surviving beyond time
+    point s among the exposed group is x higher than that among the
+    unexposed group, controlling for baseline covariates,
+
+-   RD=x can be interpreted as: The probability of surviving beyond time
+    point s among the exposed group is x higher than that among the
+    unexposed group, controlling for baseline covariates, had the
+    mediator distribution g been the fixed to that of the unexposed
+    group.
+
+-   SD=x can be interpreted as: The probability of surviving beyond time
+    point s among the exposed group is estimated to increase by x, had
+    the time to mediator distribution among the exposed group been
+    changed to that of the unexposed group, controlling for baseline
+    covariates,
 
 ## Reference
 
