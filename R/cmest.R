@@ -538,6 +538,8 @@ cmest <- function(data = NULL, model = "rb",
     
     # PARALLEL computing
     ## nboot grid
+    cat("\n")
+    cat("Started bootstrapping...")
     i_grid = seq(1, nboot, 1)
     ## run in parallel
     no_cores <- parallel::detectCores() 
@@ -548,8 +550,6 @@ cmest <- function(data = NULL, model = "rb",
     pb <- txtProgressBar(max = nboot, style = 3)
     progress <- function(n) setTxtProgressBar(pb, n)
     opts <- list(progress = progress)
-    cat("\n")
-    cat("Started bootstrapping...")
     
     system.time({
       i_grid = seq(1, nboot, 1)
